@@ -152,10 +152,12 @@ function serveAudio(req, res, audioFilePath) {
         "Content-Range": `bytes ${start}-${end}/${total}`,
         "Content-Length": end - start + 1,
       });
+      if (req.method === "HEAD") return res.end();
       return fs.createReadStream(audioFilePath, { start, end }).pipe(res);
     }
   }
   res.writeHead(200, { "Content-Length": total });
+  if (req.method === "HEAD") return res.end();
   return fs.createReadStream(audioFilePath).pipe(res);
 }
 
@@ -226,7 +228,7 @@ export async function createBethanyApp({
         });
       }
 
-      if (req.method === "GET" && pathname === "/api/sermon/audio") {
+      if ((req.method === "GET" || req.method === "HEAD") && pathname === "/api/sermon/audio") {
         return serveAudio(req, res, audioFilePath);
       }
 

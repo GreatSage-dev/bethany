@@ -359,8 +359,13 @@ describe("Live HTTP API, Server-Side RBAC, Transcribe & Twilio Webhook Integrati
     }
   });
 
-  it("streams real WAV pastor audio and enforces HTTP Range bounds (206 / 416)", async () => {
+  it("streams real WAV pastor audio and enforces HTTP HEAD and Range bounds (200 / 206 / 416)", async () => {
     assert.equal(fs.existsSync(AUDIO_PATH), true, "Expected data/pastor-sunday-recap.wav to exist");
+    const head = await fetch(`${baseUrl}/api/sermon/audio`, { method: "HEAD" });
+    assert.equal(head.status, 200);
+    assert.equal(head.headers.get("content-type"), "audio/wav");
+    assert.ok(Number(head.headers.get("content-length")) > 100000);
+
     const full = await fetch(`${baseUrl}/api/sermon/audio`);
     assert.equal(full.status, 200);
     assert.equal(full.headers.get("content-type"), "audio/wav");
