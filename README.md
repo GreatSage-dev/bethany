@@ -13,9 +13,9 @@ Bethany gives a congregation one phone number that works from any rotary or push
 
 ![Bethany editorial landing view with landline care audio player](docs/screenshots/hero.jpg)
 
-## Try It in 10 Seconds (`/judge`)
+## Try It in 10 Seconds (`/phone` or `/judge`)
 
-Open `/judge` (or `http://localhost:3001/judge` locally). You do not need an account, a phone number, or an API key to test every path:
+Click **Open live phone** on the landing page (opens `/phone` in a dedicated tab) or go straight to `/judge`. You do not need an account, a phone number, or an API key to test every path:
 
 1. **Press `1` on the keypad** to hear the pastor's Psalm 23 message stream from `GET /api/sermon/audio` and inspect the Twilio TwiML XML that a real phone call receives.
 2. **Press `2` (or click a synthetic caller preset)** to send a spoken voice message through live Groq Whisper transcription or pre-seeded fixtures.
