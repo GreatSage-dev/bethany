@@ -81,6 +81,26 @@ body.page-app {
   flex-shrink: 0;
 }
 
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  padding: 12px 20px;
+  border-radius: 4px;
+  background: var(--bg-ink);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform 150ms var(--ease-out);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -89,6 +109,16 @@ select:focus-visible,
 summary:focus-visible {
   outline: 2px solid var(--accent-olive);
   outline-offset: 2px;
+}
+
+/* High-contrast light focus rings on dark surfaces (WCAG 2.1 AA) */
+.site-nav:not(.is-scrolled) a:focus-visible,
+.hero button:focus-visible,
+.hero a:focus-visible,
+.handset-screen button:focus-visible,
+.dark-cta-section a:focus-visible,
+.site-footer a:focus-visible {
+  outline-color: #ffffff;
 }
 
 /* Landing Navigation */
@@ -112,10 +142,10 @@ summary:focus-visible {
 }
 
 .nav-inner {
-  max-width: 1360px;
-  height: 84px;
+  max-width: 1400px;
+  height: 96px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -140,13 +170,13 @@ summary:focus-visible {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 24px;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 8px;
 }
 
 .nav-links a {
@@ -154,20 +184,29 @@ summary:focus-visible {
   text-decoration: none;
   font-size: 15px;
   font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
   opacity: 0.92;
-  transition: opacity 150ms var(--ease-out);
+  transition: opacity 150ms var(--ease-out), background-color 150ms var(--ease-out);
 }
 
-.nav-links a:hover { opacity: 1; }
+.nav-links a:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
+}
 
-/* Landing Pill CTAs (4px grid, 44px hero height, 36px nav height) */
+.site-nav.is-scrolled .nav-links a:hover {
+  background: var(--bg-subtle);
+}
+
+/* Landing Pill CTAs (Austin Stone 50px hero / 44px nav proportions) */
 .pill-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 44px;
-  padding: 0 20px;
+  height: 50px;
+  padding: 0 28px;
   border-radius: 100px;
   font-family: var(--font-sans);
   font-size: 14px;
@@ -189,12 +228,15 @@ summary:focus-visible {
 .pill-white:hover { background: #f2f0eb; }
 
 .pill-ghost-light {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.54);
+  border: 2px solid rgba(255, 255, 255, 0.61);
 }
 
-.pill-ghost-light:hover { background: rgba(255, 255, 255, 0.16); }
+.pill-ghost-light:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.85);
+}
 
 .pill-dark {
   background: var(--bg-ink);
@@ -207,14 +249,14 @@ summary:focus-visible {
 .pill-outline-dark {
   background: transparent;
   color: var(--text-primary);
-  border-color: var(--border-strong);
+  border-color: var(--text-secondary);
 }
 
 .pill-outline-dark:hover { background: var(--bg-subtle); }
 
 .site-nav .nav-cta {
   height: 44px;
-  padding: 0 22px;
+  padding: 0 24px;
   background: #ffffff;
   color: var(--bg-ink);
   font-size: 14px;
@@ -223,7 +265,7 @@ summary:focus-visible {
 
 .site-nav.is-scrolled .nav-cta {
   height: 40px;
-  padding: 0 18px;
+  padding: 0 20px;
   background: var(--bg-ink);
   color: #ffffff;
 }
@@ -247,25 +289,26 @@ summary:focus-visible {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 68% 42%;
+  object-position: 66% 42%;
 }
 
+/* Lighter atmospheric scrim lets warm parlor shadows breathe instead of forming a black wall */
 .hero-scrim {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(24, 22, 19, 0.78) 0%, rgba(24, 22, 19, 0.48) 48%, rgba(24, 22, 19, 0.08) 82%),
-    linear-gradient(180deg, rgba(18, 16, 14, 0.62) 0%, rgba(18, 16, 14, 0.26) 16%, rgba(18, 16, 14, 0) 34%, rgba(18, 16, 14, 0.34) 100%);
+    linear-gradient(90deg, rgba(22, 20, 18, 0.56) 0%, rgba(22, 20, 18, 0.28) 46%, rgba(22, 20, 18, 0.04) 76%),
+    linear-gradient(180deg, rgba(18, 16, 14, 0.54) 0%, rgba(18, 16, 14, 0.22) 15%, rgba(18, 16, 14, 0) 32%, rgba(18, 16, 14, 0.34) 100%);
 }
 
 .hero-inner {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 1360px;
+  max-width: 1400px;
   min-height: 100%;
   margin: 0 auto;
-  padding: 108px 40px 36px;
+  padding: 112px 56px 40px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
   align-items: end;
@@ -431,8 +474,9 @@ summary:focus-visible {
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid var(--border-hairline);
+  box-shadow: 14px 14px 40px 0 rgba(0, 0, 0, 0.07);
   object-fit: cover;
 }
 
@@ -563,11 +607,59 @@ summary:focus-visible {
   color: var(--text-secondary);
 }
 
+/* SECTION 4: Dark sanctuary invitation callout (Austin Stone #282828 band) */
+.dark-cta-section {
+  background: var(--bg-ink);
+  color: #ffffff;
+  padding: 88px 0;
+}
+
+.dark-cta-inner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.dark-cta-copy {
+  max-width: 600px;
+}
+
+.dark-cta-eyebrow {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.dark-cta-copy h2 {
+  margin: 0 0 16px;
+  font-size: clamp(32px, 3.8vw, 48px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.dark-cta-copy p:last-child {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.dark-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 /* Footer ribbon */
 .site-footer {
   background: var(--accent-olive);
   color: rgba(255, 255, 255, 0.92);
   padding: 28px 0;
+  box-shadow: 0 -2px 12px 0 rgba(0, 0, 0, 0.14);
 }
 
 .footer-inner {
@@ -720,7 +812,7 @@ summary:focus-visible {
   border: 1px solid var(--border-strong);
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 8px 24px rgba(34, 32, 29, 0.05);
+  box-shadow: 14px 14px 40px 0 rgba(0, 0, 0, 0.06);
 }
 
 .handset-top {
@@ -1029,11 +1121,12 @@ summary:focus-visible {
 
 /* RIGHT: 1px Hairline Deacon Care Ledger */
 .ledger-panel {
+  min-width: 0;
   background: #ffffff;
   border: 1px solid var(--border-hairline);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(34, 32, 29, 0.04);
+  box-shadow: 14px 14px 40px 0 rgba(0, 0, 0, 0.05);
 }
 
 .ledger-toolbar {
@@ -1151,12 +1244,14 @@ summary:focus-visible {
   align-items: baseline;
   gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .call-name {
   font-size: 16px;
   font-weight: 500;
   color: var(--text-primary);
+  overflow-wrap: anywhere;
 }
 
 .call-phone {
@@ -1184,6 +1279,7 @@ summary:focus-visible {
   font-size: 14px;
   color: var(--text-primary);
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .transcript-box {
@@ -1194,6 +1290,7 @@ summary:focus-visible {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-secondary);
+  overflow-wrap: anywhere;
 }
 
 .pii-mark {
@@ -1212,6 +1309,7 @@ summary:focus-visible {
   font-size: 13px;
   color: var(--text-primary);
   margin-bottom: 12px;
+  overflow-wrap: anywhere;
 }
 
 .volunteer-preview-label {
@@ -1230,6 +1328,7 @@ summary:focus-visible {
   font-size: 13px;
   color: #7c1f28;
   margin-bottom: 12px;
+  overflow-wrap: anywhere;
 }
 
 .crisis-alert-box strong { font-weight: 600; }
@@ -1298,21 +1397,27 @@ summary:focus-visible {
 
 @media (max-width: 640px) {
   .container, .app-container { padding: 0 16px; }
-  .nav-inner { height: 68px; padding: 0 16px; }
-  .site-nav .nav-cta { height: 38px; padding: 0 16px; }
+  .nav-inner { height: 56px; padding: 0 16px; }
+  .site-nav.is-scrolled .nav-inner { height: 56px; }
+  .site-nav .nav-cta { height: 36px; padding: 0 16px; font-size: 13px; }
+  .pill-btn { height: 46px; padding: 0 22px; }
   .app-topbar-inner { padding: 8px 16px; }
+  .app-bar-controls { width: 100%; }
+  .role-switcher { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  .role-tab { height: 38px; text-align: center; }
   .brand-name { display: none; }
   .nav-links { display: none; }
   .app-status-meta { display: none; }
   .hero { height: auto; min-height: 100svh; max-height: none; }
   .hero-photo { object-position: 76% 24%; }
   .hero-scrim {
-    background: linear-gradient(180deg, rgba(24, 22, 19, 0.50) 0%, rgba(24, 22, 19, 0.72) 62%, rgba(24, 22, 19, 0.88) 100%);
+    background: linear-gradient(180deg, rgba(24, 22, 19, 0.46) 0%, rgba(24, 22, 19, 0.68) 62%, rgba(24, 22, 19, 0.86) 100%);
   }
-  .hero-inner { padding: 92px 16px 32px; gap: 28px; }
+  .hero-inner { padding: 88px 16px 32px; gap: 28px; }
   .hero-audio-card { justify-self: stretch; max-width: none; }
   .editorial-section { padding: 64px 0; }
-  .safeguards-section { padding: 64px 0 80px; }
+  .safeguards-section { padding: 64px 0 72px; }
+  .dark-cta-section { padding: 64px 0; }
   .app-main { padding: 16px 0 40px; }
   .ledger-toolbar, .call-row, .rbac-banner, .json-drawer { padding-left: 16px; padding-right: 16px; }
 }
