@@ -3,7 +3,7 @@
 **Church that comes home.** Church AI over plain landlines.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-3C4331.svg)](LICENSE)
-[![Tests: 20/20 passing](https://img.shields.io/badge/Tests-20%2F20%20passing-3C4331.svg)](test/backend.test.mjs)
+[![Tests: 21/21 passing](https://img.shields.io/badge/Tests-21%2F21%20passing-3C4331.svg)](test/backend.test.mjs)
 [![Dependencies: 0](https://img.shields.io/badge/Runtime%20Dependencies-0-487A7C.svg)](package.json)
 [![Track: Outreach & Evangelism](https://img.shields.io/badge/AI%20for%20Church%202026-Outreach%20%26%20Evangelism-282828.svg)](https://aiforchurch.com/hackathon)
 
@@ -94,7 +94,7 @@ Latest probe snapshot from [`evidence/backend-report.json`](evidence/backend-rep
 
 | Probe | Measured Result | Latency |
 | :--- | :--- | :--- |
-| Automated test suite (`test/backend.test.mjs`) | `20/20` tests passing (including 5 second-pass audit regressions) | `~3.0s` |
+| Automated test suite (`test/backend.test.mjs`) | `21/21` tests passing (including audit and Vercel rewrite regressions) | `~3.0s` |
 | Deterministic crisis gate (`Evelyn` distress preset) | HTTP `201`, `urgentEscalated: true`, `aiCounselingBlocked: true`, flags `["self_harm", "medical_emergency"]` | `66.04ms` |
 | Server-side RBAC + `Rock#7183` probe | Volunteer sees `1` approved call, `rawTranscript: false`, CSV export HTTP `403`, unknown `callerId` count `0` | `23.99ms` |
 | Twilio TwiML webhook (`Digits=1`) | HTTP `200`, valid XML `<Play>.../api/sermon/audio</Play>` | `13.93ms` |
@@ -120,7 +120,7 @@ Open `http://localhost:3001` (or `http://localhost:3001/judge`). Without an API 
 
 ### Deploy on Vercel
 
-1. Import `GreatSage-dev/bethany` in Vercel (uses `api/index.mjs`, `public/`, and `vercel.json` with Node 24 LTS).
+1. Import `GreatSage-dev/bethany` in Vercel (uses `api/index.js`, `public/`, and `vercel.json` with Node 24 LTS).
 2. Add `GROQ_API_KEY` in Project Settings -> Environment Variables for live Whisper transcription and structured extraction.
 3. Optional: attach free **Upstash Redis** from the Vercel Marketplace (`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`) to persist care queue updates across serverless cold starts.
 4. Optional: set `TWILIO_AUTH_TOKEN` and point any Twilio voice number webhook (`POST`) to `https://<your-vercel-domain>/api/twiml` to dial Bethany from a real landline or mobile phone.

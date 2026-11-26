@@ -10,6 +10,7 @@ import { computeTwilioSignature, renderTwiml, resolveIvrStep, verifyTwilioSignat
 import { BethanyStore, resolveDefaultDbPath } from "../src/core/store.mjs";
 import { analyzeCallMessage, detectCrisis, findSensitiveSpans, scrubTextForVolunteer } from "../src/core/triage.mjs";
 import { createBethanyApp } from "../src/server.mjs";
+import { normalizeVercelRewriteUrl } from "../api/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const AUDIO_PATH = path.resolve(__dirname, "..", "data", "pastor-sunday-recap.wav");
@@ -480,5 +481,18 @@ describe("Live HTTP API, Server-Side RBAC, Transcribe & Twilio Webhook Integrati
 
     assert.equal(store.listCalls().length, beforeCount, "Existing local calls must survive failed snapshot import");
     store.close();
+  });
+
+  it("normalizes Vercel /api/index rewrite URLs without breaking query params or paths", () => {
+    assert.equal(normalizeVercelRewriteUrl("/api/index?__path=health"), "/api/health");
+    assert.equal(
+      normalizeVercelRewriteUrl("/api/index?__path=calls&callerId=unknown-999&role=pastor"),
+      "/api/calls?callerId=unknown-999&role=pastor"
+    );
+    assert.equal(
+      normalizeVercelRewriteUrl("/api/calls?__path=calls&status=approved"),
+      "/api/calls?status=approved"
+    );
+    assert.equal(normalizeVercelRewriteUrl("/api/twiml?step=recorded"), "/api/twiml?step=recorded");
   });
 });

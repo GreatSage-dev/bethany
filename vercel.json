@@ -1,14 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "echo zero-runtime-dependencies",
+  "outputDirectory": "public",
   "functions": {
-    "api/index.mjs": {
+    "api/index.js": {
       "includeFiles": "data/pastor-sunday-recap.wav"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.mjs"
+      "destination": "/api/index?__path=$1"
     },
     {
       "source": "/judge",

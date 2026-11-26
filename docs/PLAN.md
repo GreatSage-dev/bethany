@@ -8,7 +8,7 @@
 ## Phase 0: Backend Hardening (Complete)
 - [x] Verify Node 24 built-in `node:sqlite` and zero-dependency ESM core.
 - [x] Lock brand name **Bethany** ("Church that comes home.") and synthetic *Grace Harbor Church* fixtures.
-- [x] Harden Vercel deployment (`api/index.mjs`, `vercel.json`, Upstash Redis REST sync, `/tmp/bethany.db` EROFS-safe fallback).
+- [x] Harden Vercel deployment (`api/index.js`, `vercel.json`, Upstash Redis REST sync, `/tmp/bethany.db` EROFS-safe fallback).
 - [x] Wire free-tier AI providers (`GROQ_API_KEY` Whisper + `openai/gpt-oss-20b`, `GEMINI_API_KEY`, `OPENAI_API_KEY`) plus deterministic local fallback.
 - [x] Verify Twilio HMAC-SHA1 `X-Twilio-Signature`, deterministic crisis gate, server-side RBAC, PII redaction, and `npm run verify` (`exit 0`).
 

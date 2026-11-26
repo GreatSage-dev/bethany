@@ -21,7 +21,9 @@ if (!process.env.VERCEL && fs.existsSync(path.join(ROOT_DIR, ".env"))) {
     // Ignore malformed optional local .env
   }
 }
-const DEFAULT_AUDIO_PATH = path.join(ROOT_DIR, "data", "pastor-sunday-recap.wav");
+const DEFAULT_AUDIO_PATH = fs.existsSync(path.join(ROOT_DIR, "data", "pastor-sunday-recap.wav"))
+  ? path.join(ROOT_DIR, "data", "pastor-sunday-recap.wav")
+  : path.join(process.cwd(), "data", "pastor-sunday-recap.wav");
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const MAX_JSON_BYTES = 64 * 1024;
 const MAX_AUDIO_JSON_BYTES = 6 * 1024 * 1024; // base64 overhead for <=4MB audio
