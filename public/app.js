@@ -204,7 +204,14 @@ function renderCalls() {
     .map((c) => {
       const isUrgent = c.status === "urgent_escalation" || c.category === "urgent";
       const badgeClass = isUrgent ? "urgent" : c.status === "approved" ? "approved" : c.status === "pending_review" ? "pending" : "";
-      const statusText = c.status.replace(/_/g, " ");
+      const friendlyStatus =
+        c.status === "urgent_escalation"
+          ? "Urgent callback"
+          : c.status === "pending_review"
+            ? "Needs approval"
+            : c.status === "approved"
+              ? "Approved"
+              : "Completed";
       const displayName = isPastor ? c.callerName : c.callerLabel;
 
       if (!isPastor) {
@@ -213,7 +220,7 @@ function renderCalls() {
             <div class="call-row-top">
               <div class="call-who">
                 <span class="call-name">${escapeHtml(displayName)}</span>
-                <span class="status-tag ${badgeClass}">${escapeHtml(statusText)}</span>
+                <span class="status-tag ${badgeClass}">${escapeHtml(friendlyStatus)}</span>
               </div>
               <span class="mono call-phone">${escapeHtml(c.assignedDeacon || "Unassigned")}</span>
             </div>
@@ -225,30 +232,27 @@ function renderCalls() {
                   : `<span class="mono call-phone">Completed</span>`
               }
             </div>
-            <div class="call-meta-foot mono">
-              <span>rawTranscript: excluded</span>
-              <span>callerPhone: excluded</span>
-              <span>medicalDetails: excluded</span>
-            </div>
+            <p class="privacy-note">Phone number, home address, and health details removed by the server</p>
           </article>`;
       }
 
       const crisisHtml = isUrgent
         ? `<div class="crisis-alert-box">
-             <strong>Deterministic crisis gate active. AI counseling blocked</strong>
+             <strong>Crisis gate triggered · AI counseling blocked</strong>
              <ul>${(c.emergencyResources || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("")}</ul>
            </div>`
         : "";
 
+      const hiddenCount = (c.redactedItems || []).length;
       const volunteerPreviewHtml = c.volunteerSummary
         ? `<div class="volunteer-preview-strip">
-             <span class="volunteer-preview-label">Volunteer card preview (${(c.redactedItems || []).length} private spans redacted)</span>
+             <span class="volunteer-preview-label">What a volunteer will see${hiddenCount ? ` · ${hiddenCount} private details hidden` : ""}</span>
              ${escapeHtml(c.volunteerSummary)}
            </div>`
         : !isUrgent
           ? `<div class="volunteer-preview-strip">
-               <span class="volunteer-preview-label">Elder and pastor only</span>
-               Private prayer request stays off the volunteer errand board
+               <span class="volunteer-preview-label">Elders and pastors only</span>
+               This prayer request never reaches the volunteer errand board
              </div>`
           : "";
 
@@ -266,7 +270,7 @@ function renderCalls() {
           <span class="mono call-phone">Assigned to ${escapeHtml(c.assignedDeacon)}</span>
           <button type="button" class="tool-btn" data-action="resolve" data-id="${escapeHtml(c.id)}">Mark complete</button>`;
       } else {
-        actionHtml = `<span class="mono call-phone">Resolved · ${escapeHtml(c.assignedDeacon || "Care team")}</span>`;
+        actionHtml = `<span class="mono call-phone">Completed · ${escapeHtml(c.assignedDeacon || "Care team")}</span>`;
       }
 
       return `
@@ -276,18 +280,16 @@ function renderCalls() {
               <span class="call-name">${escapeHtml(displayName)}</span>
               <span class="mono call-phone">${escapeHtml(c.callerPhone)}</span>
             </div>
-            <span class="status-tag ${badgeClass}">${escapeHtml(c.category)} · ${escapeHtml(statusText)}</span>
+            <span class="status-tag ${badgeClass}">${escapeHtml(friendlyStatus)}</span>
           </div>
           <p class="call-summary">${escapeHtml(c.pastoralSummary)}</p>
-          <div class="transcript-box">${highlightRedactedTranscript(c.rawTranscript, c.redactedItems)}</div>
+          <div class="row-block">
+            <span class="row-label">What the caller said${hiddenCount ? `<span class="row-hint"> · highlighted words are hidden from volunteers</span>` : ""}</span>
+            <div class="transcript-box">${highlightRedactedTranscript(c.rawTranscript, c.redactedItems)}</div>
+          </div>
           ${crisisHtml}
           ${volunteerPreviewHtml}
           <div class="call-actions">${actionHtml}</div>
-          <div class="call-meta-foot mono">
-            <span>engine: ${escapeHtml(c.extractionMode)}</span>
-            <span>redacted: ${(c.redactedItems || []).length} spans</span>
-            <span>id: ${escapeHtml(c.id)}</span>
-          </div>
         </article>`;
     })
     .join("");
@@ -347,6 +349,7 @@ async function handleKeypad(digit) {
       if (audio) audio.pause();
       el("screen-audio-strip").hidden = true;
       el("screen-state").textContent = "Connected · Ready to record need";
+      el("custom-message").open = true;
       el("caller-transcript").focus();
     } else if (res.step === "urgent_care") {
       if (audio) audio.pause();

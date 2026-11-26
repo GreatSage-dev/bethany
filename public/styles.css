@@ -702,7 +702,12 @@ summary:focus-visible {
 
 /* =========================================================
    DEDICATED LIVE PHONE APP TAB (/phone & /judge)
+   Generous whitespace + 1-2-3 guided visual flow
    ========================================================= */
+body.page-app {
+  background: var(--bg-subtle);
+}
+
 .app-topbar {
   position: sticky;
   top: 0;
@@ -713,15 +718,14 @@ summary:focus-visible {
 }
 
 .app-topbar-inner {
-  max-width: 1440px;
-  min-height: 60px;
+  max-width: 1320px;
+  height: 64px;
   margin: 0 auto;
-  padding: 8px 24px;
+  padding: 0 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
 }
 
 .app-brand-group {
@@ -741,25 +745,171 @@ summary:focus-visible {
   color: var(--text-secondary);
 }
 
-.app-bar-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
 .app-status-meta {
   font-size: 12px;
   color: var(--text-muted);
 }
 
-/* Segmented role switcher (outer 10px, padding 4px -> inner 6px) */
+.app-main {
+  padding: 36px 0 96px;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* Open-ground 3-step orientation band (zero box clutter, lets content show above the fold) */
+.guide {
+  padding: 0 0 32px;
+  margin-bottom: 40px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.guide-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.guide-title {
+  margin: 0;
+  font-size: clamp(24px, 2.6vw, 32px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.guide-lead {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.guide-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.guide-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.guide-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid var(--border-strong);
+  color: var(--accent-olive);
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.guide-steps strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.guide-steps li div > span {
+  display: block;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* Main two-column workspace with wide 48px gutter */
+.workspace-grid {
+  display: grid;
+  grid-template-columns: 408px minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.caller-column {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.step-block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.step-head {
+  padding: 0 2px;
+}
+
+.step-head-split {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.step-head-split > div:first-child {
+  flex: 1;
+  min-width: 0;
+  max-width: 480px;
+}
+
+.step-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-olive);
+  background: rgba(60, 67, 49, 0.1);
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.step-head h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.step-head p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Segmented role switcher inside Step 3 */
 .role-switcher {
   display: inline-flex;
   padding: 4px;
   border-radius: 10px;
   background: var(--bg-subtle);
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
 }
 
 .role-tab {
@@ -769,8 +919,8 @@ summary:focus-visible {
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
-  height: 32px;
-  padding: 0 12px;
+  height: 36px;
+  padding: 0 16px;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out), transform 120ms var(--ease-out);
@@ -783,36 +933,13 @@ summary:focus-visible {
   color: #ffffff;
 }
 
-.app-main {
-  padding: 24px 0 48px;
-}
-
-.app-container {
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
-.workspace-grid {
-  display: grid;
-  grid-template-columns: 400px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-}
-
-/* Tactile Ivory Landline Handset (outer 20px, padding 20px -> inner 12px/8px) */
-.handset-panel {
-  position: sticky;
-  top: 84px;
-}
-
+/* Step 1: Tactile Ivory Landline Handset */
 .handset-shell {
   background: var(--bg-ivory);
   border: 1px solid var(--border-strong);
   border-radius: 20px;
-  padding: 20px;
-  box-shadow: 14px 14px 40px 0 rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  box-shadow: 14px 14px 40px 0 rgba(0, 0, 0, 0.05);
 }
 
 .handset-top {
@@ -852,9 +979,9 @@ summary:focus-visible {
   background: var(--bg-ink);
   color: var(--text-on-dark);
   border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  min-height: 108px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  min-height: 112px;
 }
 
 .screen-bar {
@@ -863,7 +990,7 @@ summary:focus-visible {
   gap: 8px;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.68);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .screen-bar > :last-child { margin-left: auto; }
@@ -881,12 +1008,12 @@ summary:focus-visible {
 .screen-prompt {
   margin: 0;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: #ffffff;
 }
 
 .screen-audio-strip {
-  margin-top: 12px;
+  margin-top: 14px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -922,19 +1049,18 @@ summary:focus-visible {
   transition: transform 150ms linear;
 }
 
-/* 12-key touch-tone keypad (8px gaps, 8px key radius) */
+/* 12-key touch-tone keypad */
 .keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 10px;
 }
 
 .dial-key {
   background: #ffffff;
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 10px 8px;
+  border-radius: 10px;
+  padding: 12px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -947,11 +1073,11 @@ summary:focus-visible {
 .dial-key:hover { background: var(--bg-raised); border-color: rgba(34, 32, 29, 0.28); }
 .dial-key:active, .dial-key.is-pressed { transform: scale(0.96); background: #e8e4dc; }
 
-.dial-key.is-featured { border-color: rgba(60, 67, 49, 0.42); }
-.dial-key.is-urgent-key { border-color: rgba(185, 50, 61, 0.36); }
+.dial-key.is-featured { border-color: rgba(60, 67, 49, 0.45); }
+.dial-key.is-urgent-key { border-color: rgba(185, 50, 61, 0.38); }
 
 .dial-num {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 500;
   line-height: 1.1;
 }
@@ -965,32 +1091,118 @@ summary:focus-visible {
 .dial-key.is-featured .dial-sub { color: var(--accent-olive); font-weight: 500; }
 .dial-key.is-urgent-key .dial-sub { color: var(--accent-crisis); font-weight: 500; }
 
-/* Intake panel inside handset */
-.intake-box {
-  border-top: 1px solid var(--border-hairline);
-  padding-top: 16px;
+/* Step 2: Sample Caller Scenarios Card */
+.message-card {
+  background: #ffffff;
+  border: 1px solid var(--border-hairline);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 14px 14px 40px 0 rgba(0, 0, 0, 0.04);
 }
 
-.intake-head {
+.scenario-list {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preset-chip.scenario {
+  width: 100%;
+  height: auto;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-ivory);
+  text-align: left;
+  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 12px;
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-out), border-color 150ms var(--ease-out), transform 120ms var(--ease-out);
 }
 
-.intake-label {
-  font-size: 13px;
+.scenario-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.scenario-cta {
+  font-size: 12px;
+  color: var(--accent-olive);
+  flex-shrink: 0;
+}
+
+.preset-chip.scenario.is-crisis-chip .scenario-cta {
+  color: var(--accent-crisis);
+}
+
+.preset-chip.scenario:hover {
+  background: var(--bg-raised);
+  border-color: rgba(34, 32, 29, 0.32);
+}
+
+.preset-chip.scenario:active { transform: scale(0.985); }
+
+.scenario-name {
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
+}
+
+.scenario-desc {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.preset-chip.scenario.is-crisis-chip {
+  border-color: rgba(185, 50, 61, 0.32);
+  background: #fdf9f9;
+}
+
+.preset-chip.scenario.is-crisis-chip .scenario-name {
+  color: var(--accent-crisis);
+}
+
+.form-feedback {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--accent-olive);
+  min-height: 18px;
+}
+
+.custom-message {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-hairline);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.custom-message summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.custom-message-body {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
 }
 
 .mic-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 32px;
-  padding: 0 12px;
+  height: 36px;
+  padding: 0 14px;
   background: #ffffff;
   border: 1px solid var(--border-strong);
   border-radius: 8px;
@@ -1002,7 +1214,7 @@ summary:focus-visible {
   transition: transform 120ms var(--ease-out), background-color 140ms var(--ease-out);
 }
 
-.mic-btn:hover { background: var(--bg-raised); }
+.mic-btn:hover { background: var(--bg-subtle); }
 .mic-btn:active { transform: scale(0.97); }
 .mic-btn.is-recording {
   background: var(--accent-crisis);
@@ -1010,35 +1222,18 @@ summary:focus-visible {
   color: #ffffff;
 }
 
-.preset-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.preset-chip {
-  border: 1px solid var(--border-strong);
-  background: #ffffff;
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 500;
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 140ms var(--ease-out), transform 120ms var(--ease-out);
-}
-
-.preset-chip:hover { background: var(--bg-raised); }
-.preset-chip:active { transform: scale(0.97); }
-.preset-chip.is-crisis-chip { color: var(--accent-crisis); border-color: rgba(185, 50, 61, 0.32); }
-
 .call-form {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-top: 4px;
 }
 
 .call-form input,
@@ -1051,7 +1246,7 @@ summary:focus-visible {
   background: #ffffff;
   border: 1px solid var(--border-strong);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   resize: vertical;
 }
 
@@ -1060,7 +1255,7 @@ summary:focus-visible {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .app-btn {
@@ -1068,12 +1263,12 @@ summary:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 36px;
-  padding: 0 16px;
+  height: 40px;
+  padding: 0 18px;
   border-radius: 8px;
   border: 1px solid transparent;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: transform 120ms var(--ease-out), background-color 150ms var(--ease-out);
@@ -1089,15 +1284,10 @@ summary:focus-visible {
 
 .app-btn-primary:hover { background: var(--bg-ink-elevated); }
 
-.form-feedback {
-  font-size: 12px;
-  color: var(--accent-olive);
-}
-
 .twiml-disclosure {
-  margin-top: 16px;
+  margin-top: 20px;
   border-top: 1px solid var(--border-hairline);
-  padding-top: 12px;
+  padding-top: 16px;
   font-size: 13px;
   color: var(--text-secondary);
 }
@@ -1109,58 +1299,52 @@ summary:focus-visible {
 
 .code-preview {
   margin: 12px 0 0;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 16px;
+  border-radius: 10px;
   background: var(--bg-ink);
   color: #edeae4;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.55;
   overflow-x: auto;
-  max-height: 240px;
+  max-height: 260px;
 }
 
-/* RIGHT: 1px Hairline Deacon Care Ledger */
+/* Step 3: Spacious Deacon Care Ledger */
 .ledger-panel {
   min-width: 0;
   background: #ffffff;
   border: 1px solid var(--border-hairline);
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
   box-shadow: 14px 14px 40px 0 rgba(0, 0, 0, 0.05);
 }
 
 .ledger-toolbar {
-  padding: 20px 24px;
+  padding: 16px 32px;
+  background: var(--bg-ivory);
   border-bottom: 1px solid var(--border-hairline);
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.ledger-title {
-  margin: 0 0 4px;
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.25;
-}
-
-.ledger-summary p {
-  margin: 0;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.ledger-tools {
-  display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 8px;
 }
 
+.tools-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.tools-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border-hairline);
+  margin: 0 4px;
+}
+
 .tool-btn {
-  height: 32px;
-  padding: 0 12px;
+  height: 34px;
+  padding: 0 14px;
   background: #ffffff;
   border: 1px solid var(--border-strong);
   color: var(--text-primary);
@@ -1176,28 +1360,25 @@ summary:focus-visible {
 .tool-btn:active { transform: scale(0.97); }
 
 .rbac-banner {
-  padding: 12px 24px;
+  padding: 18px 32px;
   background: #f3f5f1;
   border-bottom: 1px solid var(--border-hairline);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--accent-olive);
 }
 
-.rbac-banner code {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  background: rgba(60, 67, 49, 0.09);
-  padding: 2px 6px;
-  border-radius: 4px;
+.rbac-banner-text {
+  max-width: 560px;
 }
 
 .json-drawer {
-  padding: 16px 24px;
+  padding: 20px 32px;
   background: var(--bg-ivory);
   border-bottom: 1px solid var(--border-hairline);
 }
@@ -1211,14 +1392,14 @@ summary:focus-visible {
   color: var(--text-secondary);
 }
 
-/* Call rows */
+/* Spacious Call Rows */
 .call-list {
   display: flex;
   flex-direction: column;
 }
 
 .call-row {
-  padding: 20px 24px;
+  padding: 32px;
   border-bottom: 1px solid var(--border-hairline);
   transition: background-color 140ms var(--ease-out);
 }
@@ -1226,17 +1407,17 @@ summary:focus-visible {
 .call-row:last-child { border-bottom: none; }
 
 .call-row.is-urgent {
-  border-left: 3px solid var(--accent-crisis);
+  border-left: 4px solid var(--accent-crisis);
   background: #fdf9f9;
 }
 
 .call-row-top {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .call-who {
@@ -1248,7 +1429,7 @@ summary:focus-visible {
 }
 
 .call-name {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--text-primary);
   overflow-wrap: anywhere;
@@ -1259,12 +1440,11 @@ summary:focus-visible {
   color: var(--text-muted);
 }
 
-/* Quiet mono status tags (6px radius, zero glow) */
 .status-tag {
   font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 400;
-  padding: 2px 8px;
+  font-weight: 500;
+  padding: 4px 10px;
   border-radius: 6px;
   background: var(--bg-subtle);
   color: var(--text-secondary);
@@ -1275,20 +1455,37 @@ summary:focus-visible {
 .status-tag.pending { background: rgba(60, 67, 49, 0.1); color: var(--accent-olive); }
 
 .call-summary {
-  margin: 0 0 12px;
-  font-size: 14px;
+  margin: 0 0 20px;
+  font-size: 15px;
   color: var(--text-primary);
-  line-height: 1.55;
+  line-height: 1.6;
   overflow-wrap: anywhere;
 }
 
+.row-block {
+  margin-bottom: 16px;
+}
+
+.row-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.row-hint {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 .transcript-box {
-  margin: 0 0 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: 10px;
   background: var(--bg-subtle);
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
@@ -1296,45 +1493,47 @@ summary:focus-visible {
 .pii-mark {
   background: rgba(185, 50, 61, 0.12);
   color: #872028;
-  padding: 0 4px;
+  padding: 1px 5px;
   border-radius: 4px;
   font-weight: 500;
 }
 
 .volunteer-preview-strip {
-  padding: 12px;
-  border-radius: 8px;
+  padding: 16px 18px;
+  border-radius: 10px;
   border: 1px solid rgba(72, 122, 124, 0.24);
   background: rgba(72, 122, 124, 0.05);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.55;
   color: var(--text-primary);
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   overflow-wrap: anywhere;
 }
 
 .volunteer-preview-label {
-  font-family: var(--font-mono);
   font-size: 12px;
+  font-weight: 500;
   color: var(--accent-slate);
   display: block;
   margin-bottom: 4px;
 }
 
 .crisis-alert-box {
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 16px 18px;
+  border-radius: 10px;
   border: 1px solid rgba(185, 50, 61, 0.3);
   background: rgba(185, 50, 61, 0.05);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.55;
   color: #7c1f28;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   overflow-wrap: anywhere;
 }
 
 .crisis-alert-box strong { font-weight: 600; }
 
 .crisis-alert-box ul {
-  margin: 8px 0 0 16px;
+  margin: 8px 0 0 18px;
   padding: 0;
 }
 
@@ -1347,26 +1546,23 @@ summary:focus-visible {
 
 .deacon-select {
   width: auto;
-  min-width: 200px;
-  height: 36px;
+  min-width: 208px;
+  height: 40px;
   padding: 0 12px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
-.call-meta-foot {
-  margin-top: 12px;
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 12px;
+.privacy-note {
+  margin: 16px 0 0;
+  font-size: 13px;
   color: var(--text-muted);
 }
 
 .empty-state {
-  padding: 40px 24px;
+  padding: 56px 32px;
   text-align: center;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 /* Toast */
@@ -1388,8 +1584,8 @@ summary:focus-visible {
 @media (max-width: 1040px) {
   .hero-inner { grid-template-columns: 1fr; padding: 104px 32px 36px; }
   .hero-audio-card { justify-self: start; }
-  .workspace-grid { grid-template-columns: 1fr; }
-  .handset-panel { position: static; }
+  .guide-steps { grid-template-columns: 1fr; gap: 20px; }
+  .workspace-grid { grid-template-columns: 1fr; gap: 40px; }
   .story-split { grid-template-columns: 1fr; gap: 36px; }
   .safeguards-grid { grid-template-columns: 1fr; gap: 36px; }
   .safeguards-sticky { position: static; }
@@ -1401,8 +1597,9 @@ summary:focus-visible {
   .site-nav.is-scrolled .nav-inner { height: 56px; }
   .site-nav .nav-cta { height: 36px; padding: 0 16px; font-size: 13px; }
   .pill-btn { height: 46px; padding: 0 22px; }
-  .app-topbar-inner { padding: 8px 16px; }
-  .app-bar-controls { width: 100%; }
+  .app-topbar-inner { padding: 0 16px; height: 56px; }
+  .guide { padding: 0 0 24px; margin-bottom: 32px; }
+  .step-head-split { flex-direction: column; align-items: stretch; gap: 12px; }
   .role-switcher { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
   .role-tab { height: 38px; text-align: center; }
   .brand-name { display: none; }
@@ -1418,8 +1615,10 @@ summary:focus-visible {
   .editorial-section { padding: 64px 0; }
   .safeguards-section { padding: 64px 0 72px; }
   .dark-cta-section { padding: 64px 0; }
-  .app-main { padding: 16px 0 40px; }
-  .ledger-toolbar, .call-row, .rbac-banner, .json-drawer { padding-left: 16px; padding-right: 16px; }
+  .app-main { padding: 24px 0 56px; }
+  .handset-shell, .message-card { padding: 20px; }
+  .ledger-toolbar, .call-row, .rbac-banner, .json-drawer { padding-left: 20px; padding-right: 20px; }
+  .tools-sep { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
