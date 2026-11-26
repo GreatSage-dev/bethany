@@ -14,8 +14,12 @@
       "destination": "/api/index?__path=$1"
     },
     {
+      "source": "/phone",
+      "destination": "/phone.html"
+    },
+    {
       "source": "/judge",
-      "destination": "/index.html"
+      "destination": "/phone.html"
     }
   ]
 }

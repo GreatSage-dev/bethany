@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bethany Live Phone · Grace Harbor Care Desk</title>
+  <meta name="description" content="Interactive touch-tone landline handset and server-side RBAC deacon care console for Bethany." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="page-app">
+  <!-- Clean 60px app bar dedicated to the live phone + RBAC workspace -->
+  <header class="app-topbar">
+    <div class="app-topbar-inner">
+      <div class="app-brand-group">
+        <a href="/" class="brand-lockup" aria-label="Back to Bethany overview">
+          <svg class="brand-svg" width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M4 15L16 5L28 15V27H20V20C20 17.8 18.2 16 16 16C13.8 16 12 17.8 12 20V27H4V15Z" fill="currentColor" />
+            <circle cx="16" cy="23" r="2.2" fill="currentColor" />
+          </svg>
+          <span class="brand-name">Bethany</span>
+        </a>
+        <span class="app-divider" aria-hidden="true">/</span>
+        <span class="app-crumb">Live phone and care desk</span>
+      </div>
+
+      <div class="app-bar-controls">
+        <span class="app-status-meta mono" id="console-status-line">Grace Harbor Church · Connecting</span>
+        <div class="role-switcher" role="tablist" aria-label="Server-side RBAC role switcher">
+          <button type="button" role="tab" aria-selected="true" class="role-tab is-active" data-role="pastor" id="role-btn-pastor">
+            Pastor view
+          </button>
+          <button type="button" role="tab" aria-selected="false" class="role-tab" data-role="volunteer" id="role-btn-volunteer">
+            Volunteer driver
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main" id="console" aria-label="Interactive Landline and Deacon Care Console">
+    <div class="app-container">
+      <div class="workspace-grid">
+        <!-- LEFT: Tactile Ivory Landline Handset -->
+        <aside class="handset-panel" aria-label="Touch-tone landline handset">
+          <div class="handset-shell">
+            <div class="handset-top">
+              <div class="handset-earpiece" aria-hidden="true"></div>
+              <div class="handset-meta">
+                <span class="handset-church">Grace Harbor Line</span>
+                <span class="mono handset-number">(555) 014-7720</span>
+              </div>
+            </div>
+
+            <div class="handset-screen" aria-live="polite">
+              <div class="screen-bar">
+                <span class="screen-dot" id="call-dot"></span>
+                <span class="mono" id="screen-state">On hook · Ready to dial</span>
+                <span class="mono" id="screen-timer">00:00</span>
+              </div>
+              <p class="screen-prompt" id="screen-prompt">
+                Press 1 to hear Pastor David's Sunday message, press 2 to leave a prayer or errand request, or press 0 for urgent care.
+              </p>
+              <div class="screen-audio-strip" id="screen-audio-strip" hidden>
+                <button type="button" class="mini-audio-btn" id="handset-audio-toggle">Pause</button>
+                <div class="screen-audio-bar"><div class="screen-audio-fill" id="handset-audio-fill"></div></div>
+                <span class="mono" id="handset-audio-clock">0:00</span>
+              </div>
+            </div>
+
+            <div class="keypad" role="group" aria-label="Touch-tone telephone keypad">
+              <button type="button" class="dial-key is-featured" data-digit="1">
+                <span class="dial-num mono">1</span>
+                <span class="dial-sub">Sermon</span>
+              </button>
+              <button type="button" class="dial-key is-featured" data-digit="2">
+                <span class="dial-num mono">2</span>
+                <span class="dial-sub">Need</span>
+              </button>
+              <button type="button" class="dial-key" data-digit="3">
+                <span class="dial-num mono">3</span>
+                <span class="dial-sub">def</span>
+              </button>
+              <button type="button" class="dial-key" data-digit="4">
+                <span class="dial-num mono">4</span>
+                <span class="dial-sub">ghi</span>
+              </button>
+              <button type="button" class="dial-key" data-digit="5">
+                <span class="dial-num mono">5</span>
+                <span class="dial-sub">jkl</span>
+              </button>
+              <button type="button" class="dial-key" data-digit="6">
+                <span class="dial-num mono">6</span>
+                <span class="dial-sub">mno</span>
+              </button>
+              <button type="button" class="dial-key" data-digit="7">
+                <span class="dial-num mono">7</span>
+                <span class="dial-sub">pqrs</span>
+              </button>
+              <button type="button" class="dial-key" data-digit="8">
+                <span class="dial-num mono">8</span>
+                <span class="dial-sub">tuv</span>
+              </button>
+              <button type="button" class="dial-key" data-digit="9">
+                <span class="dial-num mono">9</span>
+                <span class="dial-sub">wxyz</span>
+              </button>
+              <button type="button" class="dial-key" data-digit="*">
+                <span class="dial-num mono">*</span>
+                <span class="dial-sub">Menu</span>
+              </button>
+              <button type="button" class="dial-key is-urgent-key" data-digit="0">
+                <span class="dial-num mono">0</span>
+                <span class="dial-sub">Urgent</span>
+              </button>
+              <button type="button" class="dial-key" data-digit="#">
+                <span class="dial-num mono">#</span>
+                <span class="dial-sub">End</span>
+              </button>
+            </div>
+
+            <div class="intake-box" id="intake-box">
+              <div class="intake-head">
+                <span class="intake-label">Voice message (Key 2)</span>
+                <button type="button" class="mic-btn" id="mic-record-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="2" width="6" height="11" rx="3" />
+                    <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
+                    <line x1="12" y1="18" x2="12" y2="22" />
+                  </svg>
+                  <span id="mic-btn-label">Record mic</span>
+                </button>
+              </div>
+
+              <div class="preset-row" aria-label="Synthetic caller scenarios">
+                <button type="button" class="preset-chip" data-preset="martha_errand">Martha · Pharmacy + PII</button>
+                <button type="button" class="preset-chip" data-preset="arthur_prayer">Arthur · Elder prayer</button>
+                <button type="button" class="preset-chip is-crisis-chip" data-preset="evelyn_urgent">Evelyn · Urgent distress</button>
+              </div>
+
+              <form id="call-form" class="call-form">
+                <div class="form-row">
+                  <label class="sr-only" for="caller-name">Caller name</label>
+                  <input id="caller-name" type="text" placeholder="Caller name" value="Martha Vance" maxlength="80" required />
+                </div>
+                <div class="form-row">
+                  <label class="sr-only" for="caller-transcript">Spoken message</label>
+                  <textarea id="caller-transcript" rows="3" placeholder="Spoken message" required></textarea>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="app-btn app-btn-primary" id="submit-call-btn">Send to care desk</button>
+                  <span class="form-feedback mono" id="intake-feedback" aria-live="polite"></span>
+                </div>
+              </form>
+
+              <details class="twiml-disclosure">
+                <summary>Inspect Twilio TwiML webhook XML</summary>
+                <pre class="code-preview mono" id="twiml-preview">Press any keypad digit to view the TwiML XML served by POST /api/twiml</pre>
+              </details>
+            </div>
+          </div>
+        </aside>
+
+        <!-- RIGHT: 1px Hairline Deacon Care Ledger -->
+        <section class="ledger-panel" aria-label="Deacon care queue">
+          <div class="ledger-toolbar">
+            <div class="ledger-summary">
+              <h1 class="ledger-title" id="ledger-heading">Pastor care queue</h1>
+              <p id="ledger-subtitle">Full transcripts and medical flags visible only to pastors. Nothing reaches volunteers until approved</p>
+            </div>
+            <div class="ledger-tools" id="pastor-tools">
+              <button type="button" class="tool-btn" id="btn-export-genesis">Genesis CSV</button>
+              <button type="button" class="tool-btn" id="btn-export-pco">Planning Center CSV</button>
+              <button type="button" class="tool-btn" id="btn-toggle-json">API JSON</button>
+              <button type="button" class="tool-btn" id="btn-reset-demo">Reset</button>
+            </div>
+          </div>
+
+          <div class="rbac-banner" id="volunteer-banner" hidden>
+            <div class="rbac-banner-text">
+              <strong>Server-side RBAC active</strong> · Requested <code>GET /api/calls</code> as <code>volunteer</code>. Raw transcripts, phone numbers, medical details, prayers, and crises were stripped on the server
+            </div>
+            <button type="button" class="tool-btn" id="btn-toggle-json-vol">Inspect raw payload</button>
+          </div>
+
+          <div class="json-drawer" id="json-drawer" hidden>
+            <div class="json-drawer-head">
+              <span class="mono" id="json-drawer-label">GET /api/calls (x-bethany-role: pastor)</span>
+              <button type="button" class="tool-btn" id="btn-close-json">Close</button>
+            </div>
+            <pre class="code-preview mono" id="json-preview"></pre>
+          </div>
+
+          <div class="call-list" id="call-list" aria-live="polite">
+            <div class="empty-state">Loading Grace Harbor Church care queue</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <audio id="sermon-audio" src="/api/sermon/audio" preload="metadata"></audio>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

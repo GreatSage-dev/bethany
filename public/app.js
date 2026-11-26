@@ -1,5 +1,5 @@
-// Bethany interactive console — zero dependencies, real WebAudio DTMF tones,
-// live Pastor WAV streaming, Groq Whisper mic transcription, and live server-side RBAC.
+// Bethany client runtime — supports both the editorial landing page (/)
+// and the dedicated live phone + deacon care tab (/phone and /judge).
 
 const DTMF_FREQS = {
   "1": [697, 1209], "2": [697, 1336], "3": [697, 1477],
@@ -23,9 +23,11 @@ const state = {
 
 const el = (id) => document.getElementById(id);
 const audio = el("sermon-audio");
+const isPhoneApp = Boolean(el("call-list"));
 
 function showToast(msg) {
   const t = el("toast");
+  if (!t) return;
   t.textContent = msg;
   t.hidden = false;
   clearTimeout(showToast._tid);
@@ -76,7 +78,7 @@ function playDtmfTone(digit) {
 }
 
 function startCallClock() {
-  if (state.callTimerId) return;
+  if (state.callTimerId || !el("screen-timer")) return;
   state.callSeconds = 0;
   state.callTimerId = setInterval(() => {
     state.callSeconds += 1;
@@ -90,16 +92,21 @@ function stopCallClock() {
   if (state.callTimerId) clearInterval(state.callTimerId);
   state.callTimerId = null;
   state.callSeconds = 0;
-  el("screen-timer").textContent = "00:00";
+  if (el("screen-timer")) el("screen-timer").textContent = "00:00";
 }
 
 function syncAudioUi() {
+  if (!audio) return;
   const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 26;
-  const pct = Math.min(100, (audio.currentTime / dur) * 100);
-  el("hero-audio-fill").style.width = `${pct}%`;
-  el("handset-audio-fill").style.width = `${pct}%`;
-  el("hero-audio-time").textContent = `${formatClock(audio.currentTime)} / ${formatClock(dur)}`;
-  el("handset-audio-clock").textContent = formatClock(audio.currentTime);
+  const ratio = Math.min(1, Math.max(0, audio.currentTime / dur));
+
+  const heroFill = el("hero-audio-fill");
+  const handsetFill = el("handset-audio-fill");
+  if (heroFill) heroFill.style.transform = `scaleX(${ratio})`;
+  if (handsetFill) handsetFill.style.transform = `scaleX(${ratio})`;
+
+  if (el("hero-audio-time")) el("hero-audio-time").textContent = `${formatClock(audio.currentTime)} / ${formatClock(dur)}`;
+  if (el("handset-audio-clock")) el("handset-audio-clock").textContent = formatClock(audio.currentTime);
 
   const playing = !audio.paused;
   const playSvg = document.querySelector("#card-play-btn .icon-play");
@@ -108,33 +115,39 @@ function syncAudioUi() {
     playSvg.hidden = playing;
     pauseSvg.hidden = !playing;
   }
-  el("hero-play-btn").textContent = playing ? "Pause Sunday's message" : "Hear Sunday's message";
-  el("handset-audio-toggle").textContent = playing ? "Pause" : "Play";
+  if (el("hero-play-btn")) el("hero-play-btn").textContent = playing ? "Pause Sunday's message" : "Hear Sunday's message";
+  if (el("handset-audio-toggle")) el("handset-audio-toggle").textContent = playing ? "Pause" : "Play";
 }
 
 function toggleSermonAudio(forcePlay = false) {
+  if (!audio) return;
   if (forcePlay || audio.paused) {
-    audio.play().catch(() => showToast("Tap play once more to allow audio playback in your browser."));
+    audio.play().catch(() => showToast("Tap play once more to allow audio playback in your browser"));
   } else {
     audio.pause();
   }
   syncAudioUi();
 }
 
-audio.addEventListener("timeupdate", syncAudioUi);
-audio.addEventListener("play", syncAudioUi);
-audio.addEventListener("pause", syncAudioUi);
-audio.addEventListener("ended", () => {
-  syncAudioUi();
-  el("screen-state").textContent = "MESSAGE FINISHED · PRESS 2 FOR NEED";
-});
-
-// Scroll header state
-function syncNavScroll() {
-  el("site-nav").classList.toggle("is-scrolled", window.scrollY > 48);
+if (audio) {
+  audio.addEventListener("timeupdate", syncAudioUi);
+  audio.addEventListener("play", syncAudioUi);
+  audio.addEventListener("pause", syncAudioUi);
+  audio.addEventListener("ended", () => {
+    syncAudioUi();
+    if (el("screen-state")) el("screen-state").textContent = "Message finished · Press 2 for need";
+  });
 }
-window.addEventListener("scroll", syncNavScroll, { passive: true });
-syncNavScroll();
+
+// Landing page scroll header state
+const siteNav = el("site-nav");
+if (siteNav) {
+  const syncNavScroll = () => {
+    siteNav.classList.toggle("is-scrolled", window.scrollY > 48);
+  };
+  window.addEventListener("scroll", syncNavScroll, { passive: true });
+  syncNavScroll();
+}
 
 // API helpers
 async function apiFetch(path, options = {}) {
@@ -163,12 +176,13 @@ function highlightRedactedTranscript(rawTranscript, redactedItems = []) {
 
 function renderCalls() {
   const list = el("call-list");
+  if (!list) return;
   const isPastor = state.role === "pastor";
 
   el("ledger-heading").textContent = isPastor ? "Pastor care queue" : "Volunteer errand cards";
   el("ledger-subtitle").textContent = isPastor
-    ? "Full transcripts and medical flags visible only to pastors. Nothing reaches volunteers until approved."
-    : "Only pastor-approved errands appear here. Private health details, addresses, prayers, and crises never leave the server.";
+    ? "Full transcripts and medical flags visible only to pastors. Nothing reaches volunteers until approved"
+    : "Only pastor-approved errands appear here. Private health details, addresses, prayers, and crises stay on the server";
   el("pastor-tools").hidden = !isPastor;
   el("volunteer-banner").hidden = isPastor;
   el("json-drawer-label").textContent = `GET /api/calls (x-bethany-role: ${state.role}) · ${state.calls.length} record(s)`;
@@ -177,8 +191,8 @@ function renderCalls() {
   if (!state.calls.length) {
     list.innerHTML = `<div class="empty-state">${
       isPastor
-        ? "No calls in the queue yet. Press 2 on the keypad to record or send a message."
-        : "No approved errands assigned yet. Switch to Pastor view to approve a pending request."
+        ? "No calls in the queue yet. Press 2 on the keypad to record or send a message"
+        : "No approved errands assigned yet. Switch to Pastor view to approve a pending request"
     }</div>`;
     return;
   }
@@ -212,39 +226,39 @@ function renderCalls() {
               }
             </div>
             <div class="call-meta-foot mono">
-              <span>rawTranscript: excluded by server</span>
-              <span>callerPhone: excluded by server</span>
-              <span>medicalDetails: excluded by server</span>
+              <span>rawTranscript: excluded</span>
+              <span>callerPhone: excluded</span>
+              <span>medicalDetails: excluded</span>
             </div>
           </article>`;
       }
 
       const crisisHtml = isUrgent
         ? `<div class="crisis-alert-box">
-             <strong>Deterministic crisis gate active — AI counseling blocked.</strong>
+             <strong>Deterministic crisis gate active. AI counseling blocked</strong>
              <ul>${(c.emergencyResources || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("")}</ul>
            </div>`
         : "";
 
       const volunteerPreviewHtml = c.volunteerSummary
         ? `<div class="volunteer-preview-strip">
-             <span class="volunteer-preview-label">Volunteer-safe card preview (${(c.redactedItems || []).length} private spans redacted)</span>
+             <span class="volunteer-preview-label">Volunteer card preview (${(c.redactedItems || []).length} private spans redacted)</span>
              ${escapeHtml(c.volunteerSummary)}
            </div>`
         : !isUrgent
           ? `<div class="volunteer-preview-strip">
-               <span class="volunteer-preview-label">Elder &amp; pastor only</span>
-               Private prayer request — never dispatched to errand volunteers.
+               <span class="volunteer-preview-label">Elder and pastor only</span>
+               Private prayer request stays off the volunteer errand board
              </div>`
           : "";
 
       let actionHtml = "";
       if (isUrgent && c.status !== "resolved") {
-        actionHtml = `<button type="button" class="pill-btn pill-dark" style="padding:8px 16px;font-size:13px" data-action="resolve" data-id="${escapeHtml(c.id)}">Confirm pastor callback completed</button>`;
+        actionHtml = `<button type="button" class="app-btn app-btn-primary" data-action="resolve" data-id="${escapeHtml(c.id)}">Confirm pastor callback completed</button>`;
       } else if (c.status === "pending_review" && c.category !== "prayer") {
         actionHtml = `
           <select class="deacon-select" id="deacon-${escapeHtml(c.id)}" aria-label="Assign deacon">${deaconOpts}</select>
-          <button type="button" class="pill-btn pill-dark" style="padding:8px 16px;font-size:13px" data-action="approve" data-id="${escapeHtml(c.id)}">Approve &amp; assign deacon</button>`;
+          <button type="button" class="app-btn app-btn-primary" data-action="approve" data-id="${escapeHtml(c.id)}">Approve and assign deacon</button>`;
       } else if (c.status === "pending_review" && c.category === "prayer") {
         actionHtml = `<button type="button" class="tool-btn" data-action="resolve" data-id="${escapeHtml(c.id)}">Mark prayed over by elders</button>`;
       } else if (c.status === "approved") {
@@ -280,6 +294,7 @@ function renderCalls() {
 }
 
 async function refreshCalls() {
+  if (!isPhoneApp) return;
   try {
     const data = await apiFetch("/api/calls");
     state.calls = data.calls || [];
@@ -299,12 +314,14 @@ async function handleKeypad(digit) {
   }
 
   if (digit === "#") {
-    audio.pause();
-    audio.currentTime = 0;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
     stopCallClock();
     el("screen-audio-strip").hidden = true;
     el("call-dot").classList.remove("is-urgent");
-    el("screen-state").textContent = "CALL ENDED · ON HOOK";
+    el("screen-state").textContent = "Call ended · On hook";
     el("screen-prompt").textContent = "Thank you for calling Grace Harbor Church. Press 1, 2, or 0 anytime.";
     return;
   }
@@ -317,31 +334,29 @@ async function handleKeypad(digit) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ digit: mappedDigit }),
     });
-
     el("twiml-preview").textContent = res.twimlPreview || "";
     el("screen-prompt").textContent = res.spokenText;
     el("call-dot").classList.toggle("is-urgent", Boolean(res.urgentTransfer));
 
     if (res.step === "sermon_playback") {
-      el("screen-state").textContent = "CONNECTED · PLAYING PASTOR AUDIO";
+      el("screen-state").textContent = "Connected · Playing pastor audio";
       el("screen-audio-strip").hidden = false;
-      audio.currentTime = 0;
+      if (audio) audio.currentTime = 0;
       toggleSermonAudio(true);
     } else if (res.step === "record_need") {
-      audio.pause();
+      if (audio) audio.pause();
       el("screen-audio-strip").hidden = true;
-      el("screen-state").textContent = "CONNECTED · READY TO RECORD NEED";
+      el("screen-state").textContent = "Connected · Ready to record need";
       el("caller-transcript").focus();
     } else if (res.step === "urgent_care") {
-      audio.pause();
+      if (audio) audio.pause();
       el("screen-audio-strip").hidden = true;
-      el("screen-state").textContent = "URGENT ESCALATION · 911 / 988";
-      // Trigger urgent escalation record in backend so pastor desk updates live
+      el("screen-state").textContent = "Urgent escalation · 911 / 988";
       await submitPresetCall("evelyn_urgent");
     } else {
-      audio.pause();
+      if (audio) audio.pause();
       el("screen-audio-strip").hidden = true;
-      el("screen-state").textContent = "CONNECTED · MAIN MENU";
+      el("screen-state").textContent = "Connected · Main menu";
     }
   } catch (err) {
     showToast(err.message);
@@ -350,7 +365,7 @@ async function handleKeypad(digit) {
 
 async function submitPresetCall(presetKey) {
   const feedback = el("intake-feedback");
-  feedback.textContent = "Processing...";
+  if (feedback) feedback.textContent = "Processing";
   try {
     const res = await apiFetch("/api/calls", {
       method: "POST",
@@ -359,21 +374,20 @@ async function submitPresetCall(presetKey) {
     });
     if (res.urgentEscalated) {
       el("call-dot").classList.add("is-urgent");
-      el("screen-state").textContent = "CRISIS GATE FIRED · PASTOR ALERTED";
-      el("screen-prompt").textContent = "Urgent distress detected. AI counseling blocked. 911 / 988 surfaced and pastor alerted.";
-      feedback.textContent = "Escalated to pastor (0 AI counseling)";
-      showToast("Deterministic crisis gate fired — escalated directly to pastor.");
+      el("screen-state").textContent = "Crisis gate fired · Pastor alerted";
+      el("screen-prompt").textContent = "Urgent distress detected. AI counseling blocked. 911 and 988 surfaced and pastor alerted.";
+      if (feedback) feedback.textContent = "Escalated to pastor (0 AI counseling)";
+      showToast("Deterministic crisis gate fired. Escalated directly to pastor");
     } else {
-      feedback.textContent = "Queued for pastor review";
-      showToast("Voice note analyzed and queued for human pastor approval.");
+      if (feedback) feedback.textContent = "Queued for pastor review";
+      showToast("Voice note analyzed and queued for human pastor approval");
     }
     await refreshCalls();
   } catch (err) {
-    feedback.textContent = err.message;
+    if (feedback) feedback.textContent = err.message;
   }
 }
 
-// Live microphone capture -> POST /api/transcribe (Groq Whisper)
 async function toggleMicRecording() {
   const btn = el("mic-record-btn");
   const label = el("mic-btn-label");
@@ -383,12 +397,12 @@ async function toggleMicRecording() {
     state.mediaRecorder.stop();
     state.isRecording = false;
     btn.classList.remove("is-recording");
-    label.textContent = "Transcribing...";
+    label.textContent = "Transcribing";
     return;
   }
 
   if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-    showToast("Microphone recording unavailable in this browser — type or pick a preset caller below.");
+    showToast("Microphone recording is unavailable in this browser. Type or pick a preset caller");
     return;
   }
 
@@ -402,7 +416,7 @@ async function toggleMicRecording() {
 
     btn.classList.add("is-recording");
     label.textContent = "Stop recording";
-    feedback.textContent = "Listening...";
+    feedback.textContent = "Listening";
 
     recorder.ondataavailable = (e) => {
       if (e.data && e.data.size > 0) state.audioChunks.push(e.data);
@@ -425,7 +439,7 @@ async function toggleMicRecording() {
           });
           el("caller-transcript").value = res.transcript;
           feedback.textContent = `Transcribed (${res.provider})`;
-          showToast("Voice transcribed via Groq Whisper — review or click Send to care desk.");
+          showToast("Voice transcribed via Groq Whisper. Review or click Send to care desk");
         } catch (err) {
           feedback.textContent = err.message;
           showToast(err.message);
@@ -438,7 +452,7 @@ async function toggleMicRecording() {
 
     recorder.start();
   } catch {
-    showToast("Microphone permission declined — you can type or click any preset scenario below.");
+    showToast("Microphone permission declined. Type or click any preset caller below");
     label.textContent = "Record mic";
   }
 }
@@ -465,138 +479,144 @@ async function downloadCsv(format) {
   }
 }
 
-// Event bindings
-document.querySelectorAll(".dial-key").forEach((btn) => {
-  btn.addEventListener("click", () => handleKeypad(btn.dataset.digit));
-});
+// Landing page bindings
+if (el("hero-play-btn")) el("hero-play-btn").addEventListener("click", () => toggleSermonAudio());
+if (el("card-play-btn")) el("card-play-btn").addEventListener("click", () => toggleSermonAudio());
 
-el("hero-play-btn").addEventListener("click", () => toggleSermonAudio());
-el("card-play-btn").addEventListener("click", () => toggleSermonAudio());
-el("handset-audio-toggle").addEventListener("click", () => toggleSermonAudio());
-el("mic-record-btn").addEventListener("click", toggleMicRecording);
-
-document.querySelectorAll(".role-tab").forEach((tab) => {
-  tab.addEventListener("click", async () => {
-    state.role = tab.dataset.role;
-    document.querySelectorAll(".role-tab").forEach((t) => {
-      const active = t.dataset.role === state.role;
-      t.classList.toggle("is-active", active);
-      t.setAttribute("aria-selected", String(active));
-    });
-    await refreshCalls();
+// Dedicated phone app bindings
+if (isPhoneApp) {
+  document.querySelectorAll(".dial-key").forEach((btn) => {
+    btn.addEventListener("click", () => handleKeypad(btn.dataset.digit));
   });
-});
 
-document.querySelectorAll(".preset-chip").forEach((chip) => {
-  chip.addEventListener("click", () => {
-    const preset = state.meta?.presets?.find((p) => p.key === chip.dataset.preset);
-    if (preset) {
-      el("caller-name").value = preset.callerName;
-      el("caller-transcript").value = preset.transcript;
-    }
-    submitPresetCall(chip.dataset.preset);
-  });
-});
+  if (el("handset-audio-toggle")) el("handset-audio-toggle").addEventListener("click", () => toggleSermonAudio());
+  if (el("mic-record-btn")) el("mic-record-btn").addEventListener("click", toggleMicRecording);
 
-el("call-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const callerName = el("caller-name").value.trim();
-  const transcript = el("caller-transcript").value.trim();
-  if (!transcript) return;
-  const feedback = el("intake-feedback");
-  feedback.textContent = "Analyzing...";
-  el("submit-call-btn").disabled = true;
-  try {
-    const res = await apiFetch("/api/calls", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ callerName, transcript }),
+  document.querySelectorAll(".role-tab").forEach((tab) => {
+    tab.addEventListener("click", async () => {
+      state.role = tab.dataset.role;
+      document.querySelectorAll(".role-tab").forEach((t) => {
+        const active = t.dataset.role === state.role;
+        t.classList.toggle("is-active", active);
+        t.setAttribute("aria-selected", String(active));
+      });
+      await refreshCalls();
     });
-    feedback.textContent = res.urgentEscalated ? "Urgent pastor alert sent" : "Queued for pastor approval";
-    el("caller-transcript").value = "";
-    await refreshCalls();
-    showToast(res.urgentEscalated ? "Crisis gate fired — pastor alerted immediately." : "Call added to pastor care queue.");
-  } catch (err) {
-    feedback.textContent = err.message;
-  } finally {
-    el("submit-call-btn").disabled = false;
-  }
-});
+  });
 
-el("call-list").addEventListener("click", async (e) => {
-  const btn = e.target.closest("button[data-action]");
-  if (!btn) return;
-  const { action, id } = btn.dataset;
-  try {
-    if (action === "approve") {
-      const select = el(`deacon-${id}`);
-      const assignedDeacon = select ? select.value : "Deacon Thomas Reid";
-      await apiFetch(`/api/calls/${encodeURIComponent(id)}/approve`, {
+  document.querySelectorAll(".preset-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const preset = state.meta?.presets?.find((p) => p.key === chip.dataset.preset);
+      if (preset) {
+        el("caller-name").value = preset.callerName;
+        el("caller-transcript").value = preset.transcript;
+      }
+      submitPresetCall(chip.dataset.preset);
+    });
+  });
+
+  el("call-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const callerName = el("caller-name").value.trim();
+    const transcript = el("caller-transcript").value.trim();
+    if (!transcript) return;
+    const feedback = el("intake-feedback");
+    feedback.textContent = "Analyzing";
+    el("submit-call-btn").disabled = true;
+    try {
+      const res = await apiFetch("/api/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignedDeacon }),
+        body: JSON.stringify({ callerName, transcript }),
       });
-      showToast(`Approved and dispatched to ${assignedDeacon}. Switch to Volunteer view to verify PII masking.`);
-    } else if (action === "resolve") {
-      await apiFetch(`/api/calls/${encodeURIComponent(id)}/resolve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      showToast("Marked complete and logged in audit trail.");
+      feedback.textContent = res.urgentEscalated ? "Urgent pastor alert sent" : "Queued for pastor approval";
+      el("caller-transcript").value = "";
+      await refreshCalls();
+      showToast(res.urgentEscalated ? "Crisis gate fired. Pastor alerted immediately" : "Call added to pastor care queue");
+    } catch (err) {
+      feedback.textContent = err.message;
+    } finally {
+      el("submit-call-btn").disabled = false;
     }
-    await refreshCalls();
-  } catch (err) {
-    showToast(err.message);
-  }
-});
+  });
 
-el("btn-export-genesis").addEventListener("click", () => downloadCsv("genesis"));
-el("btn-export-pco").addEventListener("click", () => downloadCsv("planning_center"));
+  el("call-list").addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const { action, id } = btn.dataset;
+    try {
+      if (action === "approve") {
+        const select = el(`deacon-${id}`);
+        const assignedDeacon = select ? select.value : "Deacon Thomas Reid";
+        await apiFetch(`/api/calls/${encodeURIComponent(id)}/approve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assignedDeacon }),
+        });
+        showToast(`Approved and dispatched to ${assignedDeacon}. Switch to Volunteer driver to verify PII masking`);
+      } else if (action === "resolve") {
+        await apiFetch(`/api/calls/${encodeURIComponent(id)}/resolve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        showToast("Marked complete and logged in audit trail");
+      }
+      await refreshCalls();
+    } catch (err) {
+      showToast(err.message);
+    }
+  });
 
-const toggleJson = () => {
-  const drawer = el("json-drawer");
-  drawer.hidden = !drawer.hidden;
-  if (!drawer.hidden) {
-    el("json-preview").textContent = JSON.stringify(state.lastRawPayload, null, 2);
-  }
-};
-el("btn-toggle-json").addEventListener("click", toggleJson);
-el("btn-toggle-json-vol").addEventListener("click", toggleJson);
-el("btn-close-json").addEventListener("click", () => { el("json-drawer").hidden = true; });
+  el("btn-export-genesis").addEventListener("click", () => downloadCsv("genesis"));
+  el("btn-export-pco").addEventListener("click", () => downloadCsv("planning_center"));
 
-el("btn-reset-demo").addEventListener("click", async () => {
-  try {
-    await apiFetch("/api/demo/reset", { method: "POST" });
-    await refreshCalls();
-    showToast("Demo queue reset to initial synthetic Grace Harbor records.");
-  } catch (err) {
-    showToast(err.message);
-  }
-});
+  const toggleJson = () => {
+    const drawer = el("json-drawer");
+    drawer.hidden = !drawer.hidden;
+    if (!drawer.hidden) {
+      el("json-preview").textContent = JSON.stringify(state.lastRawPayload, null, 2);
+    }
+  };
+  el("btn-toggle-json").addEventListener("click", toggleJson);
+  el("btn-toggle-json-vol").addEventListener("click", toggleJson);
+  el("btn-close-json").addEventListener("click", () => { el("json-drawer").hidden = true; });
+
+  el("btn-reset-demo").addEventListener("click", async () => {
+    try {
+      await apiFetch("/api/demo/reset", { method: "POST" });
+      await refreshCalls();
+      showToast("Demo queue reset to initial synthetic Grace Harbor records");
+    } catch (err) {
+      showToast(err.message);
+    }
+  });
+}
 
 // Boot
 async function boot() {
   try {
     const [health, meta] = await Promise.all([apiFetch("/api/health"), apiFetch("/api/meta")]);
     state.meta = meta;
-    const aiLabel =
-      health.aiMode === "groq_free_tier"
-        ? "Groq Whisper + LLM live"
-        : health.aiMode === "gemini_free_tier"
-          ? "Gemini live"
-          : "Deterministic local engine";
-    el("console-status-line").textContent = `${meta.church.name} · ${meta.church.city} · ${aiLabel} · Synthetic Demo`;
-    el("hero-sermon-title").textContent = meta.sermon.title;
-    el("hero-sermon-speaker").textContent = meta.sermon.speaker;
-    await refreshCalls();
-  } catch (err) {
-    el("console-status-line").textContent = `Backend offline: ${err.message}`;
-  }
+    if (el("hero-sermon-title")) el("hero-sermon-title").textContent = meta.sermon.title;
+    if (el("hero-sermon-speaker")) el("hero-sermon-speaker").textContent = meta.sermon.speaker;
 
-  // If opened via /judge, scroll straight to the interactive proof stage
-  if (window.location.pathname === "/judge") {
-    el("console").scrollIntoView({ behavior: "instant" });
+    if (el("console-status-line")) {
+      const aiLabel =
+        health.aiMode === "groq_free_tier"
+          ? "Groq Whisper + LLM live"
+          : health.aiMode === "gemini_free_tier"
+            ? "Gemini live"
+            : "Deterministic local engine";
+      el("console-status-line").textContent = `${meta.church.name} · ${aiLabel} · Synthetic demo`;
+    }
+    if (isPhoneApp) {
+      await refreshCalls();
+    }
+  } catch (err) {
+    if (el("console-status-line")) {
+      el("console-status-line").textContent = `Backend offline: ${err.message}`;
+    }
   }
 }
 

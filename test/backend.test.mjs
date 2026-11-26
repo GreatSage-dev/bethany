@@ -375,15 +375,23 @@ describe("Live HTTP API, Server-Side RBAC, Transcribe & Twilio Webhook Integrati
     assert.equal(badRange.status, 416);
   });
 
-  it("serves static frontend routes (/, /judge, /favicon.svg) and refuses path traversal", async () => {
+  it("serves static frontend routes (/, /phone, /judge, /favicon.svg) and refuses path traversal", async () => {
     const home = await fetch(`${baseUrl}/`);
     assert.equal(home.status, 200);
     assert.match(home.headers.get("content-type"), /text\/html/);
-    assert.match(await home.text(), /Church that comes home/);
+    const homeHtml = await home.text();
+    assert.match(homeHtml, /Church that<br \/>comes home/);
+    assert.match(homeHtml, /href="\/phone"\s+target="_blank"/);
+
+    const phone = await fetch(`${baseUrl}/phone`);
+    assert.equal(phone.status, 200);
+    assert.match(phone.headers.get("content-type"), /text\/html/);
+    assert.match(await phone.text(), /Pastor care queue/);
 
     const judge = await fetch(`${baseUrl}/judge`);
     assert.equal(judge.status, 200);
     assert.match(judge.headers.get("content-type"), /text\/html/);
+    assert.match(await judge.text(), /Pastor care queue/);
 
     const favicon = await fetch(`${baseUrl}/favicon.svg`);
     assert.equal(favicon.status, 200);

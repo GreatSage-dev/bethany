@@ -42,7 +42,12 @@ const STATIC_MIME = {
 
 function tryServeStatic(req, res, pathname) {
   if (req.method !== "GET" || pathname.startsWith("/api/")) return false;
-  const rel = pathname === "/" || pathname === "/judge" ? "index.html" : pathname.replace(/^\/+/, "");
+  const rel =
+    pathname === "/"
+      ? "index.html"
+      : pathname === "/phone" || pathname === "/judge"
+        ? "phone.html"
+        : pathname.replace(/^\/+/, "");
   const abs = path.resolve(PUBLIC_DIR, rel);
   // Prevent directory traversal outside public/
   if (!abs.startsWith(PUBLIC_DIR + path.sep) && abs !== path.join(PUBLIC_DIR, "index.html")) return false;
