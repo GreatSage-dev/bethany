@@ -1,0 +1,18 @@
+{
+  "name": "bethany",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Bethany — Church that comes home. Church AI over plain landlines with real pastor audio and PII-masked deacon dispatch.",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "verify": "node --test test/*.test.mjs && node scripts/check-words.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "check:words": "node scripts/check-words.mjs",
+    "evidence": "node scripts/evidence.mjs"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}
