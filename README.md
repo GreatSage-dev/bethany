@@ -2,6 +2,7 @@
 
 **Church that comes home.** Church AI over plain landlines.
 
+[![Live Demo: bethany-sigma.vercel.app](https://img.shields.io/badge/Live%20Demo-bethany--sigma.vercel.app-3C4331.svg)](https://bethany-sigma.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-3C4331.svg)](LICENSE)
 [![Tests: 21/21 passing](https://img.shields.io/badge/Tests-21%2F21%20passing-3C4331.svg)](test/backend.test.mjs)
 [![Dependencies: 0](https://img.shields.io/badge/Runtime%20Dependencies-0-487A7C.svg)](package.json)
@@ -71,7 +72,7 @@ In Barna and Gloo research on church AI (October 2026), 94% of pastors reported 
 | :--- | :--- | :--- |
 | Zero-dependency Node 24 HTTP API and static web UI | Implemented | Uses `node:http`, `node:sqlite`, `node:crypto`, and `node:test` (`0` npm runtime packages). |
 | Unified IVR state machine and Twilio TwiML webhook | Implemented | `POST /api/twiml` and `POST /api/simulate/dtmf` run the same `src/core/ivr.mjs` state machine with HMAC-SHA1 `X-Twilio-Signature` validation. |
-| Real pastor audio streaming with Range support | Implemented | `GET /api/sermon/audio` streams `data/pastor-sunday-recap.wav` (26s synthetic demo clip, HTTP `200`/`206`/`416`). |
+| Real pastor audio streaming with Range support | Implemented | `GET /api/sermon/audio` streams `data/pastor-sunday-recap.wav` (37s Psalm 23 demo voiceover, HTTP `200`/`206`/`416`). |
 | Live speech-to-text and structured extraction | Implemented | `POST /api/transcribe` supports free-tier Groq (`whisper-large-v3-turbo`), Gemini (`gemini-2.5-flash`), or OpenAI; extraction supports Groq (`openai/gpt-oss-20b`), Gemini, OpenAI, and deterministic local fallback. |
 | Deterministic crisis gate and PII redaction | Implemented | Catches self-harm, abuse, medical emergencies, and acute spiritual distress before LLM calls; redacts addresses, units, phones, emails, doctors, and medications. |
 | Server-side RBAC and `Rock#7183` caller scoping | Implemented | Defaults to `volunteer`; strips sensitive fields before JSON serialization; unknown `callerId` queries return `0` records. |
@@ -84,7 +85,7 @@ In Barna and Gloo research on church AI (October 2026), 94% of pastors reported 
 Every claim is backed by runnable commands that exit with code `0`. Run the full verification pipeline locally:
 
 ```bash
-npm run verify      # 20 deterministic unit + integration + audit regression tests + check:words
+npm run verify      # 21 deterministic unit + integration + audit regression tests + check:words
 npm run smoke       # Boot server, verify health, audio, and Pastor vs. Volunteer RBAC counts
 npm run check:words # Enforce plain-language docs (0 banned marketing buzzwords)
 npm run evidence    # Re-generate evidence/backend-report.json with live probe latencies

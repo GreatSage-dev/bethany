@@ -22,11 +22,11 @@ export const SUNDAY_SERMON = {
   title: "You Are Not Forgotten (Psalm 23:1–4)",
   speaker: "Pastor David Chen",
   date: "2026-11-22",
-  durationSeconds: 26,
+  durationSeconds: 37,
   audioPath: "/api/sermon/audio",
   isSyntheticDemoAudio: true,
   transcript:
-    "Good morning, Grace Harbor family. This is Pastor David sharing a short word from Sunday's message in Psalm 23. Even when the week feels quiet or you cannot make it into the sanctuary, the Lord is your shepherd and this church is still your family. If you need prayer, a grocery run, or a ride to the pharmacy this week, press 2 right now and one of our deacons will call you back today.",
+    'Good morning, Grace Harbor family. This is Pastor David sharing a short word from Sunday\'s message in Psalm 23. Even when the week feels quiet, or you cannot make it into the sanctuary, the Lord is your shepherd, and this church is still your family. "The Lord is my shepherd; I shall not want. He makes me lie down in green pastures. He leads me beside still waters. He restores my soul." If you need prayer, a grocery run, or a ride to the pharmacy this week, press 2 right now, and one of our deacons will call you back today. Grace and peace to you.',
 };
 
 export const CALLER_PRESETS = {

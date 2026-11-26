@@ -97,7 +97,7 @@ function stopCallClock() {
 
 function syncAudioUi() {
   if (!audio) return;
-  const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 26;
+  const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 37;
   const ratio = Math.min(1, Math.max(0, audio.currentTime / dur));
 
   const heroFill = el("hero-audio-fill");
