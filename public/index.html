@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bethany — Church that comes home</title>
+  <meta name="description" content="Church audio and PII-masked deacon care over plain landlines. Zero apps, zero QR codes, zero AI preaching." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <!-- Quiet editorial navigation (transparent over hero, crisp white on scroll) -->
+  <header class="site-nav" id="site-nav">
+    <div class="nav-inner">
+      <a href="#top" class="brand-lockup" aria-label="Bethany home">
+        <svg class="brand-svg" width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M4 15L16 5L28 15V27H20V20C20 17.8 18.2 16 16 16C13.8 16 12 17.8 12 20V27H4V15Z" fill="currentColor" />
+          <circle cx="16" cy="23" r="2.2" fill="currentColor" />
+        </svg>
+        <span class="brand-name">Bethany</span>
+      </a>
+
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#how-it-works">How it works</a>
+        <a href="#console">Live phone</a>
+        <a href="#safeguards">Safeguards</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="#console" class="pill-btn pill-primary nav-cta">Open live phone</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- SECTION 1: Full-bleed documentary hero -->
+    <section class="hero" aria-label="Introduction">
+      <img
+        src="/images/hero-bethany-home.jpg"
+        alt="An older congregation member smiling at home beside a sunlit window while listening on a classic ivory corded landline telephone beside an open Bible and teacup"
+        class="hero-photo"
+        width="1440"
+        height="810"
+        fetchpriority="high"
+      />
+      <div class="hero-scrim" aria-hidden="true"></div>
+
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <p class="hero-kicker">Grace Harbor Church · Landline Care Line</p>
+          <h1>Church that<br />comes home</h1>
+          <p class="hero-lead">
+            Every other church tool assumes a screen. Bethany puts your pastor's real Sunday voice and deacon care on the plain landline already beside their chair.
+          </p>
+          <div class="hero-ctas">
+            <a href="#console" class="pill-btn pill-white">Pick up the phone</a>
+            <button type="button" class="pill-btn pill-ghost-light" id="hero-play-btn">Hear Sunday's message</button>
+          </div>
+        </div>
+
+        <!-- Bottom-right embedded sermon audio moment (Austin Stone architectural echo) -->
+        <aside class="hero-audio-card" aria-label="Latest Sunday message audio">
+          <div class="audio-card-label">Listen on any phone · <span class="mono">(555) 014-7720</span></div>
+          <div class="audio-card-row">
+            <button type="button" class="play-circle" id="card-play-btn" aria-label="Play Pastor David's Sunday message">
+              <svg class="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <polygon points="6,4 20,12 6,20" />
+              </svg>
+              <svg class="icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden>
+                <rect x="6" y="4" width="4" height="16" />
+                <rect x="14" y="4" width="4" height="16" />
+              </svg>
+            </button>
+            <div class="audio-card-meta">
+              <div class="audio-card-title" id="hero-sermon-title">You Are Not Forgotten (Psalm 23)</div>
+              <div class="audio-card-sub">
+                <span id="hero-sermon-speaker">Pastor David Chen</span> · <span class="mono" id="hero-audio-time">0:00 / 0:26</span>
+              </div>
+              <div class="audio-progress" aria-hidden="true">
+                <div class="audio-progress-fill" id="hero-audio-fill"></div>
+              </div>
+            </div>
+          </div>
+          <div class="audio-card-note">Synthetic demo voice clip · Churches upload their pastor's own audio</div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Open-ground editorial statement + candid pastor study photography -->
+    <section class="editorial-section" id="how-it-works">
+      <div class="container">
+        <div class="editorial-lead-block">
+          <h2 class="editorial-statement">
+            No apps to download. No QR codes to scan. Just press 1 for Sunday's word, or press 2 to ask your church for help.
+          </h2>
+          <div class="editorial-ctas">
+            <a href="#console" class="pill-btn pill-dark">Try the live keypad</a>
+            <a href="#safeguards" class="pill-btn pill-outline-dark">Read our safeguards</a>
+          </div>
+        </div>
+
+        <div class="story-split">
+          <figure class="story-figure">
+            <img
+              src="/images/story-pastor-recording.jpg"
+              alt="Pastor sitting at a sunlit wooden church study desk with an open Bible and notebook, recording a short Sunday message into a desktop microphone"
+              class="story-photo"
+              width="1200"
+              height="900"
+              loading="lazy"
+            />
+            <figcaption class="story-caption">
+              Pressing 1 always plays your own pastor's recorded voice. AI never preaches, prays, or counsels.
+            </figcaption>
+          </figure>
+
+          <div class="key-ledger" aria-label="Three telephone keypad paths">
+            <div class="key-row">
+              <span class="key-num mono">01</span>
+              <div class="key-body">
+                <h3>Press 1 — Real pastor audio</h3>
+                <p>Homebound seniors, nursing-home residents, and low-vision members hear a calm 3-minute Sunday recap in their own pastor's voice from any rotary or push-button phone.</p>
+              </div>
+            </div>
+            <div class="key-row">
+              <span class="key-num mono">02</span>
+              <div class="key-body">
+                <h3>Press 2 — Voice prayer or errand</h3>
+                <p>Callers speak naturally. AI transcribes and structures the need while plain deterministic code masks addresses, doctors, and medications before any volunteer sees it.</p>
+              </div>
+            </div>
+            <div class="key-row">
+              <span class="key-num mono">00</span>
+              <div class="key-body">
+                <h3>Press 0 — Immediate human care</h3>
+                <p>Self-harm, abuse, or acute medical distress bypasses AI immediately, surfaces 911 and 988 guidance, and pins an urgent callback alert to the pastor's desk.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Wide live interactive proof stage (/judge) -->
+    <section class="console-section" id="console" aria-label="Interactive Landline and Deacon Care Console">
+      <div class="container">
+        <div class="console-header">
+          <div>
+            <p class="section-eyebrow mono" id="console-status-line">Grace Harbor Church · Synthetic Demo · Checking API...</p>
+            <h2 class="console-title">Dial the church line, then inspect what each role sees</h2>
+          </div>
+
+          <div class="console-controls">
+            <div class="role-switcher" role="tablist" aria-label="Server-side RBAC role switcher">
+              <button type="button" role="tab" aria-selected="true" class="role-tab is-active" data-role="pastor" id="role-btn-pastor">
+                Pastor view
+              </button>
+              <button type="button" role="tab" aria-selected="false" class="role-tab" data-role="volunteer" id="role-btn-volunteer">
+                Volunteer driver view
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="workspace-grid">
+          <!-- LEFT: Tactile Ivory Landline Handset -->
+          <div class="handset-panel">
+            <div class="handset-shell">
+              <div class="handset-top">
+                <div class="handset-earpiece" aria-hidden="true"></div>
+                <div class="handset-meta">
+                  <span class="handset-church">Grace Harbor Line</span>
+                  <span class="mono handset-number">(555) 014-7720</span>
+                </div>
+              </div>
+
+              <!-- Dark recessed landline OLED screen -->
+              <div class="handset-screen" aria-live="polite">
+                <div class="screen-bar">
+                  <span class="screen-dot" id="call-dot"></span>
+                  <span class="mono" id="screen-state">ON HOOK · READY TO DIAL</span>
+                  <span class="mono" id="screen-timer">00:00</span>
+                </div>
+                <p class="screen-prompt" id="screen-prompt">
+                  Press 1 to hear Pastor David's Sunday message, press 2 to leave a prayer or errand request, or press 0 for urgent care.
+                </p>
+                <div class="screen-audio-strip" id="screen-audio-strip" hidden>
+                  <button type="button" class="mini-audio-btn" id="handset-audio-toggle">Pause</button>
+                  <div class="screen-audio-bar"><div class="screen-audio-fill" id="handset-audio-fill"></div></div>
+                  <span class="mono" id="handset-audio-clock">0:00</span>
+                </div>
+              </div>
+
+              <!-- Real 12-key DTMF touch-tone keypad -->
+              <div class="keypad" role="group" aria-label="Touch-tone telephone keypad">
+                <button type="button" class="dial-key is-featured" data-digit="1">
+                  <span class="dial-num mono">1</span>
+                  <span class="dial-sub">Sermon</span>
+                </button>
+                <button type="button" class="dial-key is-featured" data-digit="2">
+                  <span class="dial-num mono">2</span>
+                  <span class="dial-sub">Need</span>
+                </button>
+                <button type="button" class="dial-key" data-digit="3">
+                  <span class="dial-num mono">3</span>
+                  <span class="dial-sub">DEF</span>
+                </button>
+                <button type="button" class="dial-key" data-digit="4">
+                  <span class="dial-num mono">4</span>
+                  <span class="dial-sub">GHI</span>
+                </button>
+                <button type="button" class="dial-key" data-digit="5">
+                  <span class="dial-num mono">5</span>
+                  <span class="dial-sub">JKL</span>
+                </button>
+                <button type="button" class="dial-key" data-digit="6">
+                  <span class="dial-num mono">6</span>
+                  <span class="dial-sub">MNO</span>
+                </button>
+                <button type="button" class="dial-key" data-digit="7">
+                  <span class="dial-num mono">7</span>
+                  <span class="dial-sub">PQRS</span>
+                </button>
+                <button type="button" class="dial-key" data-digit="8">
+                  <span class="dial-num mono">8</span>
+                  <span class="dial-sub">TUV</span>
+                </button>
+                <button type="button" class="dial-key" data-digit="9">
+                  <span class="dial-num mono">9</span>
+                  <span class="dial-sub">WXYZ</span>
+                </button>
+                <button type="button" class="dial-key" data-digit="*">
+                  <span class="dial-num mono">*</span>
+                  <span class="dial-sub">Menu</span>
+                </button>
+                <button type="button" class="dial-key is-urgent-key" data-digit="0">
+                  <span class="dial-num mono">0</span>
+                  <span class="dial-sub">Urgent</span>
+                </button>
+                <button type="button" class="dial-key" data-digit="#">
+                  <span class="dial-num mono">#</span>
+                  <span class="dial-sub">End</span>
+                </button>
+              </div>
+
+              <!-- Quick caller intake panel (live mic via Groq Whisper + 1-click presets) -->
+              <div class="intake-box" id="intake-box">
+                <div class="intake-head">
+                  <span class="intake-label">Leave a voice message (Key 2)</span>
+                  <button type="button" class="mic-btn" id="mic-record-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="9" y="2" width="6" height="11" rx="3" />
+                      <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
+                      <line x1="12" y1="18" x2="12" y2="22" />
+                    </svg>
+                    <span id="mic-btn-label">Record mic</span>
+                  </button>
+                </div>
+
+                <div class="preset-row" aria-label="One-click synthetic caller scenarios">
+                  <button type="button" class="preset-chip" data-preset="martha_errand">Martha · Pharmacy + medical PII</button>
+                  <button type="button" class="preset-chip" data-preset="arthur_prayer">Arthur · Elder prayer</button>
+                  <button type="button" class="preset-chip is-crisis-chip" data-preset="evelyn_urgent">Evelyn · Urgent distress</button>
+                </div>
+
+                <form id="call-form" class="call-form">
+                  <div class="form-row">
+                    <label class="sr-only" for="caller-name">Caller name</label>
+                    <input id="caller-name" type="text" placeholder="Caller name (e.g. Martha Vance)" value="Martha Vance" maxlength="80" required />
+                  </div>
+                  <div class="form-row">
+                    <label class="sr-only" for="caller-transcript">Spoken message</label>
+                    <textarea id="caller-transcript" rows="3" placeholder="Speak with the mic or type a caller message..." required></textarea>
+                  </div>
+                  <div class="form-actions">
+                    <button type="submit" class="pill-btn pill-dark form-submit" id="submit-call-btn">Send to care desk</button>
+                    <span class="form-feedback mono" id="intake-feedback" aria-live="polite"></span>
+                  </div>
+                </form>
+
+                <details class="twiml-disclosure">
+                  <summary>Inspect live Twilio TwiML webhook XML</summary>
+                  <pre class="code-preview mono" id="twiml-preview">Press any keypad digit to view the exact TwiML XML served by POST /api/twiml.</pre>
+                </details>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: 1px Hairline Deacon Care Ledger -->
+          <div class="ledger-panel">
+            <div class="ledger-toolbar">
+              <div class="ledger-summary">
+                <h3 id="ledger-heading">Pastor care queue</h3>
+                <p id="ledger-subtitle">Full transcripts and medical flags visible only to pastors. Nothing reaches volunteers until approved.</p>
+              </div>
+              <div class="ledger-tools" id="pastor-tools">
+                <button type="button" class="tool-btn" id="btn-export-genesis">Genesis ChMS CSV</button>
+                <button type="button" class="tool-btn" id="btn-export-pco">Planning Center CSV</button>
+                <button type="button" class="tool-btn" id="btn-toggle-json">Inspect API JSON</button>
+                <button type="button" class="tool-btn" id="btn-reset-demo">Reset</button>
+              </div>
+            </div>
+
+            <!-- Volunteer-mode RBAC proof strip (shown only when Volunteer role is active) -->
+            <div class="rbac-banner" id="volunteer-banner" hidden>
+              <div class="rbac-banner-text">
+                <strong>Server-side RBAC active.</strong> This browser requested <code>GET /api/calls</code> with <code>x-bethany-role: volunteer</code>. Raw transcripts, phone numbers, medical details, prayers, and crisis alerts were stripped by the server before JSON serialization.
+              </div>
+              <button type="button" class="tool-btn" id="btn-toggle-json-vol">Inspect raw payload</button>
+            </div>
+
+            <!-- Optional Live Server JSON Inspector (proves zero CSS-only hiding) -->
+            <div class="json-drawer" id="json-drawer" hidden>
+              <div class="json-drawer-head">
+                <span class="mono" id="json-drawer-label">GET /api/calls (x-bethany-role: pastor)</span>
+                <button type="button" class="tool-btn" id="btn-close-json">Close</button>
+              </div>
+              <pre class="code-preview mono" id="json-preview"></pre>
+            </div>
+
+            <!-- Calls list -->
+            <div class="call-list" id="call-list" aria-live="polite">
+              <div class="empty-state">Loading Grace Harbor Church care queue...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: Sticky Left / Flowing Right Hairline Safeguards Ledger -->
+    <section class="safeguards-section" id="safeguards">
+      <div class="container">
+        <div class="safeguards-grid">
+          <div class="safeguards-sticky">
+            <p class="section-eyebrow mono">Faithfulness &amp; Responsible AI</p>
+            <h2>Honest about what AI should never do</h2>
+            <p class="safeguards-lead">
+              AI understands messy spoken voicemails. Plain deterministic code decides crisis handoffs, privacy boundaries, and human approvals.
+            </p>
+          </div>
+
+          <div class="safeguards-list">
+            <article class="safeguard-row">
+              <span class="safeguard-num mono">01</span>
+              <div>
+                <h3>Zero synthetic preaching or counseling</h3>
+                <p>Pressing 1 streams your own pastor's recorded audio. Barna and Gloo research (Oct 2026) found 94% of pastors worry about AI misinterpreting Scripture and 71% to 94% demand immediate human handoff in spiritual or self-harm crises.</p>
+              </div>
+            </article>
+
+            <article class="safeguard-row">
+              <span class="safeguard-num mono">02</span>
+              <div>
+                <h3>Deterministic crisis circuit breaker</h3>
+                <p>Self-harm, abuse, medical falls, and acute distress are detected by deterministic rules before any LLM prompt runs. Urgent calls cannot be approved into the volunteer errand pool (enforced with HTTP 409).</p>
+              </div>
+            </article>
+
+            <article class="safeguard-row">
+              <span class="safeguard-num mono">03</span>
+              <div>
+                <h3>Server-side RBAC and Rock#7183 immunity</h3>
+                <p>Volunteer payloads physically omit raw transcripts, phone numbers, doctors, street addresses, and medications on the server. Unknown caller lookups always return an empty list rather than dumping congregation care records.</p>
+              </div>
+            </article>
+
+            <article class="safeguard-row">
+              <span class="safeguard-num mono">04</span>
+              <div>
+                <h3>No ChMS migration, under $10 a month to run</h3>
+                <p>Approved visits export directly to Genesis ChMS and Planning Center People CSV formats with spreadsheet formula sanitization, keeping your congregation's existing tools intact.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- SECTION 5: Quiet olive-moss sanctuary grounding bar (Austin Stone signature rhythm) -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M4 15L16 5L28 15V27H20V20C20 17.8 18.2 16 16 16C13.8 16 12 17.8 12 20V27H4V15Z" fill="currentColor" />
+          <circle cx="16" cy="23" r="2.2" fill="currentColor" />
+        </svg>
+        <div>
+          <div class="footer-name">Bethany · Church that comes home</div>
+          <div class="footer-note">All Grace Harbor Church callers and recordings in this demo are 100% synthetic. Built for AI for Church Hackathon 2026.</div>
+        </div>
+      </div>
+      <div class="footer-links mono">
+        <a href="/api/health" target="_blank" rel="noreferrer">/api/health</a>
+        <a href="#console">/judge</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Hidden shared audio element for real WAV playback -->
+  <audio id="sermon-audio" src="/api/sermon/audio" preload="metadata"></audio>
+  <!-- Accessible toast notification -->
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
