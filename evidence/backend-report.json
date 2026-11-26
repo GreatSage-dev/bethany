@@ -1,0 +1,31 @@
+{
+  "brand": "Bethany",
+  "generatedAt": "2026-11-26T20:36:34.900Z",
+  "nodeVersion": "v24.18.0",
+  "externalDependencies": 0,
+  "vercelReady": true,
+  "probes": {
+    "crisisEscalation": {
+      "latencyMs": 66.04,
+      "httpStatus": 201,
+      "urgentEscalated": true,
+      "aiCounselingBlocked": true,
+      "crisisFlags": [
+        "self_harm",
+        "medical_emergency"
+      ]
+    },
+    "rbacAndRock7183": {
+      "latencyMs": 23.99,
+      "volunteerVisibleCalls": 1,
+      "volunteerHasRawTranscript": false,
+      "volunteerCsvStatus": 403,
+      "rock7183MissingCallerCount": 0
+    },
+    "twilioTwimlWebhook": {
+      "latencyMs": 13.93,
+      "status": 200,
+      "hasPlayAudio": true
+    }
+  }
+}
