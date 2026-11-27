@@ -315,6 +315,8 @@ export async function transcribeAudioBuffer({ buffer, mimeType = "audio/webm", f
   const openaiKey = cleanEnvSecret(process.env.OPENAI_API_KEY);
   const hasConfiguredKey = Boolean(groqKey || geminiKey || openaiKey);
 
+  const statusOut = {};
+
   // Free Tier #1: Groq Whisper (whisper-large-v3-turbo) — zero credit card required.
   if (groqKey) {
     const form = new FormData();
@@ -324,7 +326,8 @@ export async function transcribeAudioBuffer({ buffer, mimeType = "audio/webm", f
     const data = await fetchJsonWithTimeout(
       "https://api.groq.com/openai/v1/audio/transcriptions",
       { method: "POST", headers: { Authorization: `Bearer ${groqKey}` }, body: form },
-      25000
+      25000,
+      statusOut
     );
     if (data?.text) return { transcript: String(data.text).trim(), provider: "groq_whisper" };
   }
@@ -351,7 +354,8 @@ export async function transcribeAudioBuffer({ buffer, mimeType = "audio/webm", f
           generationConfig: { temperature: 0 },
         }),
       },
-      25000
+      25000,
+      statusOut
     );
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
     if (text) return { transcript: text, provider: "gemini_audio" };
@@ -365,13 +369,15 @@ export async function transcribeAudioBuffer({ buffer, mimeType = "audio/webm", f
     const data = await fetchJsonWithTimeout(
       "https://api.openai.com/v1/audio/transcriptions",
       { method: "POST", headers: { Authorization: `Bearer ${openaiKey}` }, body: form },
-      25000
+      25000,
+      statusOut
     );
     if (data?.text) return { transcript: String(data.text).trim(), provider: "openai_whisper" };
   }
 
   if (hasConfiguredKey) {
-    throw Object.assign(new Error("Upstream speech-to-text provider timed out or rejected the audio payload."), { status: 502 });
+    const detail = statusOut.status ? ` (upstream HTTP ${statusOut.status})` : statusOut.code ? ` (${statusOut.code})` : "";
+    throw Object.assign(new Error(`Upstream speech-to-text provider timed out or rejected the audio payload${detail}.`), { status: 502 });
   }
 
   throw Object.assign(
