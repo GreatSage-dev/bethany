@@ -9,7 +9,7 @@
 
   --text-primary: #22201d;
   --text-secondary: #5c5750;
-  --text-muted: #78726a;
+  --text-muted: #635d56;
   --text-on-dark: rgba(255, 255, 255, 0.92);
 
   --border-hairline: rgba(34, 32, 29, 0.09);
@@ -57,15 +57,9 @@ body.page-app {
   font-variant-numeric: tabular-nums;
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
+button:disabled {
+  opacity: 0.62;
+  cursor: wait;
 }
 
 .container {
@@ -414,10 +408,11 @@ summary:focus-visible {
 
 .audio-progress {
   margin-top: 8px;
-  height: 3px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.2);
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.22);
   overflow: hidden;
+  cursor: pointer;
 }
 
 .audio-progress-fill {
@@ -432,7 +427,7 @@ summary:focus-visible {
 .audio-card-note {
   margin-top: 12px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.56);
+  color: rgba(255, 255, 255, 0.74);
 }
 
 /* SECTION 2: Open-ground editorial story */
@@ -1034,10 +1029,11 @@ body.page-app {
 
 .screen-audio-bar {
   flex: 1;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.2);
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.22);
   overflow: hidden;
+  cursor: pointer;
 }
 
 .screen-audio-fill {
@@ -1358,6 +1354,11 @@ body.page-app {
 
 .tool-btn:hover { background: var(--bg-subtle); }
 .tool-btn:active { transform: scale(0.97); }
+.tool-btn.is-confirming {
+  border-color: var(--accent-crisis);
+  color: var(--accent-crisis);
+  background: #fdf9f9;
+}
 
 .rbac-banner {
   padding: 18px 32px;
@@ -1515,7 +1516,18 @@ body.page-app {
   font-weight: 500;
   color: var(--accent-slate);
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.summary-override-input {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: #ffffff;
+  border: 1px solid rgba(72, 122, 124, 0.34);
+  border-radius: 6px;
+  padding: 8px 10px;
 }
 
 .crisis-alert-box {
@@ -1602,7 +1614,6 @@ body.page-app {
   .step-head-split { flex-direction: column; align-items: stretch; gap: 12px; }
   .role-switcher { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
   .role-tab { height: 38px; text-align: center; }
-  .brand-name { display: none; }
   .nav-links { display: none; }
   .app-status-meta { display: none; }
   .hero { height: auto; min-height: 100svh; max-height: none; }

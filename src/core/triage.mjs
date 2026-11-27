@@ -41,12 +41,12 @@ const CRISIS_RULES = [
 
 const ADDRESS_RE =
   /\b\d{1,5}\s+[A-Za-z0-9'.-]+(?:\s+[A-Za-z0-9'.-]+){0,3}\s+(?:St|Street|Ave|Avenue|Ln|Lane|Rd|Road|Dr|Drive|Blvd|Boulevard|Ct|Court|Way|Pl|Place|Cir|Circle)\b\.?/gi;
-const UNIT_RE = /\b(?:Apt|Apartment|Unit|Suite)\s*#?\s*[A-Za-z0-9-]+\b/gi;
+const UNIT_RE = /\b(?:Apt|Apartment|Unit|Suite|Room|Rm|Bldg|Building)\s*#?\s*[A-Za-z0-9-]+\b/gi;
 const PHONE_RE = /\b(?:\+?1[-.\s]?)?(?:\(\d{3}\)|\d{3})[-.\s]?\d{3}[-.\s]?\d{4}\b/g;
 const EMAIL_RE = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
-const DOCTOR_RE = /\bDr\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g;
+const DOCTOR_RE = /\b(?:Dr\.?|dr\.?|[Dd]octor|[Nn]urse)\s+(?:[A-Z][a-z'-]+(?:\s+[A-Z][a-z'-]+)?|[a-z][a-z'-]{1,24})\b/g;
 const MEDICAL_RE =
-  /\b(lisinopril|metformin|insulin|warfarin|atorvastatin|eliquis|xarelto|lipitor|oxycodone|painkillers?|blood pressure(?: pills?)?|cholesterol|cataract(?: surgery)?|surgery|hip(?: is acting up)?|chemo(?:therapy)?|cancer|biopsy|tumor|mri|pacemaker|dialysis|diabetes|diabetic|arthritis|cardiologist|oncologist|therapist|psychiatrist|dementia|alzheimer'?s|depression|bipolar|anxiety|addiction|rehab|overdose|miscarriage|divorce|eviction|bankruptcy|diagnosis|pills?|medication|hospital(?:ized)?)\b/gi;
+  /\b(lisinopril|metformin|insulin|warfarin|atorvastatin|eliquis|xarelto|lipitor|oxycodone|gabapentin|furosemide|prednisone|levothyroxine|omeprazole|amlodipine|hydrochlorothiazide|painkillers?|blood pressure(?: pills?)?|cholesterol|cataract(?: surgery)?|surgery|hip(?: is acting up)?|chemo(?:therapy)?|cancer|biopsy|tumor|mri|pacemaker|dialysis|diabetes|diabetic|arthritis|cardiologist|oncologist|therapist|psychiatrist|dementia|alzheimer'?s|depression|bipolar|anxiety|addiction|rehab|overdose|miscarriage|divorce|eviction|bankruptcy|diagnosis|stroke|shingles|ulcer|inhaler|oxygen|wheelchair|infection|fracture|pills?|medication|hospital(?:ized)?)\b/gi;
 
 export function formatCallerLabel(fullName) {
   const parts = String(fullName || "Church Member")
@@ -108,11 +108,11 @@ export function findSensitiveSpans(transcript) {
 
 export function scrubTextForVolunteer(text) {
   return String(text || "")
-    .replace(ADDRESS_RE, "[address withheld]")
     .replace(UNIT_RE, "[unit withheld]")
+    .replace(DOCTOR_RE, "[clinician withheld]")
+    .replace(ADDRESS_RE, "[address withheld]")
     .replace(PHONE_RE, "[phone withheld]")
     .replace(EMAIL_RE, "[email withheld]")
-    .replace(DOCTOR_RE, "[clinician withheld]")
     .replace(MEDICAL_RE, "[private detail]")
     .replace(/\s+/g, " ")
     .trim();
@@ -184,6 +184,12 @@ export function cleanEnvSecret(raw) {
   return s.replace(/[\r\n]+/g, "").trim();
 }
 
+let lastAiAuthHealthy = true;
+
+export function isAiAuthHealthy() {
+  return lastAiAuthHealthy;
+}
+
 async function fetchJsonWithTimeout(url, options, timeoutMs = 5500, statusOut = null) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -195,8 +201,10 @@ async function fetchJsonWithTimeout(url, options, timeoutMs = 5500, statusOut = 
     const res = await fetch(url, { ...options, headers: mergedHeaders, signal: controller.signal });
     if (!res.ok) {
       if (statusOut) statusOut.status = res.status;
+      if (res.status === 401 || res.status === 403) lastAiAuthHealthy = false;
       return null;
     }
+    lastAiAuthHealthy = true;
     return await res.json();
   } catch (err) {
     if (statusOut) statusOut.code = err?.name || "fetch_error";

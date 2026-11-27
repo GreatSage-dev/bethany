@@ -94,7 +94,7 @@
                 </p>
                 <div class="screen-audio-strip" id="screen-audio-strip" hidden>
                   <button type="button" class="mini-audio-btn" id="handset-audio-toggle">Pause</button>
-                  <div class="screen-audio-bar"><div class="screen-audio-fill" id="handset-audio-fill"></div></div>
+                  <div class="screen-audio-bar" id="handset-audio-bar" role="slider" tabindex="0" aria-label="Seek pastor message" aria-valuemin="0" aria-valuemax="37" aria-valuenow="0"><div class="screen-audio-fill" id="handset-audio-fill"></div></div>
                   <span class="mono" id="handset-audio-clock">0:00</span>
                 </div>
               </div>
@@ -191,12 +191,12 @@
               <p id="ledger-subtitle">Full transcripts visible only to pastors. Nothing reaches volunteers until approved</p>
             </div>
             <div class="role-switcher" role="tablist" aria-label="Switch who is viewing">
-              <button type="button" role="tab" aria-selected="true" class="role-tab is-active" data-role="pastor" id="role-btn-pastor">Pastor view</button>
-              <button type="button" role="tab" aria-selected="false" class="role-tab" data-role="volunteer" id="role-btn-volunteer">Volunteer view</button>
+              <button type="button" role="tab" aria-selected="true" aria-controls="ledger-panel" tabindex="0" class="role-tab is-active" data-role="pastor" id="role-btn-pastor">Pastor view</button>
+              <button type="button" role="tab" aria-selected="false" aria-controls="ledger-panel" tabindex="-1" class="role-tab" data-role="volunteer" id="role-btn-volunteer">Volunteer view</button>
             </div>
           </div>
 
-          <section class="ledger-panel" aria-labelledby="ledger-heading">
+          <section class="ledger-panel" id="ledger-panel" role="tabpanel" aria-labelledby="role-btn-pastor">
             <div class="ledger-toolbar" id="pastor-tools">
               <span class="tools-label">Export</span>
               <button type="button" class="tool-btn" id="btn-export-genesis">Genesis CSV</button>

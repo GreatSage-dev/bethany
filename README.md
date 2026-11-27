@@ -4,7 +4,7 @@
 
 [![Live Demo: bethany-sigma.vercel.app](https://img.shields.io/badge/Live%20Demo-bethany--sigma.vercel.app-3C4331.svg)](https://bethany-sigma.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-3C4331.svg)](LICENSE)
-[![Tests: 21/21 passing](https://img.shields.io/badge/Tests-21%2F21%20passing-3C4331.svg)](test/backend.test.mjs)
+[![Tests: 25/25 passing](https://img.shields.io/badge/Tests-25%2F25%20passing-3C4331.svg)](test/backend.test.mjs)
 [![Dependencies: 0](https://img.shields.io/badge/Runtime%20Dependencies-0-487A7C.svg)](package.json)
 [![Track: Outreach & Evangelism](https://img.shields.io/badge/AI%20for%20Church%202026-Outreach%20%26%20Evangelism-282828.svg)](https://aiforchurch.com/hackathon)
 
@@ -85,7 +85,7 @@ In Barna and Gloo research on church AI (October 2026), 94% of pastors reported 
 Every claim is backed by runnable commands that exit with code `0`. Run the full verification pipeline locally:
 
 ```bash
-npm run verify      # 21 deterministic unit + integration + audit regression tests + check:words
+npm run verify      # 25 deterministic unit + integration + audit regression tests + check:words
 npm run smoke       # Boot server, verify health, audio, and Pastor vs. Volunteer RBAC counts
 npm run check:words # Enforce plain-language docs (0 banned marketing buzzwords)
 npm run evidence    # Re-generate evidence/backend-report.json with live probe latencies
@@ -95,7 +95,7 @@ Latest probe snapshot from [`evidence/backend-report.json`](evidence/backend-rep
 
 | Probe | Measured Result | Latency |
 | :--- | :--- | :--- |
-| Automated test suite (`test/backend.test.mjs`) | `21/21` tests passing (including audit and Vercel rewrite regressions) | `~3.0s` |
+| Automated test suite (`test/backend.test.mjs`) | `25/25` tests passing (including security, rotary/Twilio `<Record>`, rate-limit, and Vercel rewrite regressions) | `~2.8s` |
 | Deterministic crisis gate (`Evelyn` distress preset) | HTTP `201`, `urgentEscalated: true`, `aiCounselingBlocked: true`, flags `["self_harm", "medical_emergency"]` | `66.04ms` |
 | Server-side RBAC + `Rock#7183` probe | Volunteer sees `1` approved call, `rawTranscript: false`, CSV export HTTP `403`, unknown `callerId` count `0` | `23.99ms` |
 | Twilio TwiML webhook (`Digits=1`) | HTTP `200`, valid XML `<Play>.../api/sermon/audio</Play>` | `13.93ms` |

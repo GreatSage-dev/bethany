@@ -82,6 +82,7 @@ export class BethanyStore {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS calls (
         id TEXT PRIMARY KEY,
+        external_sid TEXT,
         caller_id TEXT NOT NULL,
         caller_name TEXT NOT NULL,
         caller_label TEXT NOT NULL,
@@ -129,6 +130,14 @@ export class BethanyStore {
         created_at TEXT NOT NULL
       );
     `);
+
+    // Lightweight forward migration for pre-existing local SQLite files
+    const cols = this.db.prepare("PRAGMA table_info(calls)").all();
+    if (!cols.some((c) => c.name === "external_sid")) {
+      this.db.exec("ALTER TABLE calls ADD COLUMN external_sid TEXT;");
+    }
+    this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_calls_external_sid ON calls(external_sid) WHERE external_sid IS NOT NULL;");
+    this.db.exec("PRAGMA user_version = 1;");
   }
 
   async upstashCommand(commandArray) {
@@ -167,15 +176,16 @@ export class BethanyStore {
       this.db.exec("DELETE FROM calls; DELETE FROM audit_log;");
       const insertCall = this.db.prepare(`
         INSERT INTO calls (
-          id, caller_id, caller_name, caller_label, caller_phone, raw_transcript,
+          id, external_sid, caller_id, caller_name, caller_label, caller_phone, raw_transcript,
           category, status, pastoral_summary, volunteer_summary, requested_time,
           redacted_items_json, crisis_flags_json, crisis_reasons_json, emergency_resources_json,
           ai_counseling_blocked, extraction_mode, assigned_deacon, approved_by, approved_at, resolved_at, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       for (const r of snapshot.calls) {
         insertCall.run(
           r.id,
+          r.external_sid ?? null,
           r.caller_id,
           r.caller_name,
           r.caller_label,
@@ -283,19 +293,59 @@ export class BethanyStore {
       );
   }
 
-  createCall(analyzed, { id = null, createdAt = new Date().toISOString() } = {}) {
+  createCall(analyzed, { id = null, externalSid = null, createdAt = new Date().toISOString() } = {}) {
+    const cleanSid = externalSid ? String(externalSid).trim() : null;
+    if (cleanSid) {
+      const existingRow = this.db.prepare("SELECT * FROM calls WHERE external_sid = ?").get(cleanSid);
+      if (existingRow) {
+        // Upgrade a pending Twilio recording placeholder when async TranscriptionText arrives later
+        if (
+          existingRow.extraction_mode === "twilio_recording_pending" &&
+          analyzed.extractionMode !== "twilio_recording_pending"
+        ) {
+          this.db
+            .prepare(
+              `UPDATE calls SET
+                raw_transcript = ?, category = ?, status = ?, pastoral_summary = ?,
+                volunteer_summary = ?, requested_time = ?, redacted_items_json = ?,
+                crisis_flags_json = ?, crisis_reasons_json = ?, emergency_resources_json = ?,
+                ai_counseling_blocked = ?, extraction_mode = ?
+               WHERE id = ?`
+            )
+            .run(
+              analyzed.rawTranscript,
+              analyzed.category,
+              analyzed.status,
+              analyzed.pastoralSummary,
+              analyzed.volunteerSummary,
+              analyzed.requestedTime,
+              JSON.stringify(analyzed.redactedItems || []),
+              JSON.stringify(analyzed.crisisFlags || []),
+              JSON.stringify(analyzed.crisisReasons || []),
+              JSON.stringify(analyzed.emergencyResources || []),
+              analyzed.aiCounselingBlocked ? 1 : 0,
+              analyzed.extractionMode,
+              existingRow.id
+            );
+          return this.getCallById(existingRow.id);
+        }
+        return parseRow(existingRow);
+      }
+    }
+
     const callId = id || `call-${crypto.randomUUID().slice(0, 8)}`;
     this.db
       .prepare(
         `INSERT INTO calls (
-          id, caller_id, caller_name, caller_label, caller_phone, raw_transcript,
+          id, external_sid, caller_id, caller_name, caller_label, caller_phone, raw_transcript,
           category, status, pastoral_summary, volunteer_summary, requested_time,
           redacted_items_json, crisis_flags_json, crisis_reasons_json, emergency_resources_json,
           ai_counseling_blocked, extraction_mode, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         callId,
+        cleanSid,
         analyzed.callerId,
         analyzed.callerName,
         analyzed.callerLabel,
@@ -452,15 +502,7 @@ export class BethanyStore {
       }));
   }
 
-  async seedIfEmpty() {
-    this.upsertSermon(SUNDAY_SERMON);
-    if (this.upstash) {
-      const hydrated = await this.syncFromRemote();
-      if (hydrated && this.db.prepare("SELECT COUNT(*) AS count FROM calls").get().count > 0) return;
-    }
-    const { count } = this.db.prepare("SELECT COUNT(*) AS count FROM calls").get();
-    if (count > 0) return;
-
+  async _insertSeedRecords() {
     for (const item of SEED_CALL_INPUTS) {
       const analyzed = await analyzeCallMessage({
         callerId: item.callerId,
@@ -477,22 +519,20 @@ export class BethanyStore {
     await this.syncToRemote();
   }
 
+  async seedIfEmpty() {
+    this.upsertSermon(SUNDAY_SERMON);
+    if (this.upstash) {
+      const hydrated = await this.syncFromRemote();
+      if (hydrated && this.db.prepare("SELECT COUNT(*) AS count FROM calls").get().count > 0) return;
+    }
+    const { count } = this.db.prepare("SELECT COUNT(*) AS count FROM calls").get();
+    if (count > 0) return;
+    await this._insertSeedRecords();
+  }
+
   async resetDemo() {
     this.db.exec("DELETE FROM calls; DELETE FROM audit_log;");
-    for (const item of SEED_CALL_INPUTS) {
-      const analyzed = await analyzeCallMessage({
-        callerId: item.callerId,
-        callerName: item.callerName,
-        callerPhone: item.callerPhone,
-        transcript: item.transcript,
-        skipAi: true,
-      });
-      const created = this.createCall(analyzed, { id: item.id, createdAt: item.createdAt });
-      if (item.preApprove) {
-        this.approveCall(created.id, item.preApprove);
-      }
-    }
-    await this.syncToRemote();
+    await this._insertSeedRecords();
   }
 
   close() {

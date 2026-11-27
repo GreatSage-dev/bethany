@@ -514,4 +514,81 @@ describe("Live HTTP API, Server-Side RBAC, Transcribe & Twilio Webhook Integrati
     assert.equal(cleanEnvSecret("'gsk_xyz'"), "gsk_xyz");
     assert.equal(cleanEnvSecret(""), "");
   });
+
+  it("supports rotary spoken digits, preserves Twilio RecordingUrl voicemails, and enforces CallSid/RecordingSid idempotency [Senior Audit]", async () => {
+    assert.equal(resolveIvrStep("one").step, "sermon_playback");
+    assert.equal(resolveIvrStep("two").step, "record_need");
+    assert.equal(resolveIvrStep("urgent").step, "urgent_care");
+
+    const menuXml = renderTwiml(resolveIvrStep(""), "https://bethany-sigma.vercel.app");
+    assert.match(menuXml, /input="dtmf speech"/);
+
+    const beforeCount = store.listCalls().length;
+    const recRes = await fetch(`${baseUrl}/api/twiml?step=recorded`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        RecordingSid: "RE999000111",
+        RecordingUrl: "http://127.0.0.1:9/unreachable-recording",
+        From: "(555) 014-9090",
+        CallerName: "Rotary Senior",
+      }).toString(),
+    });
+    assert.equal(recRes.status, 200);
+    assert.equal(store.listCalls().length, beforeCount + 1, "Twilio RecordingUrl without TranscriptionText must not be silently dropped");
+
+    // Duplicate webhook retry with same RecordingSid must be idempotent
+    await fetch(`${baseUrl}/api/twiml?step=recorded`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        RecordingSid: "RE999000111",
+        RecordingUrl: "http://127.0.0.1:9/unreachable-recording",
+        From: "(555) 014-9090",
+      }).toString(),
+    });
+    assert.equal(store.listCalls().length, beforeCount + 1, "Duplicate RecordingSid must not create a second call row");
+
+    // Async transcribeCallback upgrades the pending recording row in place
+    const cbRes = await fetch(`${baseUrl}/api/twiml?step=transcribed`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        RecordingSid: "RE999000111",
+        TranscriptionText: "Please pick up groceries at Kroger on Thursday morning.",
+        From: "(555) 014-9090",
+      }).toString(),
+    });
+    assert.equal(cbRes.status, 200);
+    assert.equal(store.listCalls().length, beforeCount + 1);
+    const upgraded = store.listCalls().find((c) => c.callerPhone === "(555) 014-9090");
+    assert.equal(upgraded.category, "errand");
+  });
+
+  it("scrubs lowercase doctor names, facility room numbers, and additional senior medications [Senior Audit]", () => {
+    const out = scrubTextForVolunteer("Room 214 after dr patel changed my gabapentin and inhaler");
+    assert.doesNotMatch(out, /214|patel|gabapentin|inhaler/i);
+  });
+
+  it("omits wildcard CORS by default and enforces 429 rate limits with Retry-After [Senior Audit]", async () => {
+    const throttled = await createBethanyApp({ dbPath: ":memory:", audioFilePath: AUDIO_PATH, rateLimitPerMin: 2 });
+    await new Promise((resolve) => throttled.server.listen(0, "127.0.0.1", resolve));
+    const { port } = throttled.server.address();
+    const tUrl = `http://127.0.0.1:${port}`;
+    try {
+      const h = await fetch(`${tUrl}/api/health`);
+      assert.equal(h.headers.get("access-control-allow-origin"), null);
+
+      const r1 = await fetch(`${tUrl}/api/demo/reset`, { method: "POST", headers: { "x-bethany-role": "pastor" } });
+      const r2 = await fetch(`${tUrl}/api/demo/reset`, { method: "POST", headers: { "x-bethany-role": "pastor" } });
+      const r3 = await fetch(`${tUrl}/api/demo/reset`, { method: "POST", headers: { "x-bethany-role": "pastor" } });
+      assert.equal(r1.status, 200);
+      assert.equal(r2.status, 200);
+      assert.equal(r3.status, 429);
+      assert.ok(Number(r3.headers.get("retry-after")) >= 1);
+    } finally {
+      await new Promise((resolve) => throttled.server.close(resolve));
+      throttled.store.close();
+    }
+  });
 });

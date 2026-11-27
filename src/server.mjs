@@ -9,7 +9,7 @@ import { CALLER_PRESETS, CHURCH_PROFILE, DEMO_DEACONS } from "./core/fixtures.mj
 import { renderTwiml, resolveIvrStep, verifyTwilioSignature, xmlEscape } from "./core/ivr.mjs";
 import { projectCallForRole, projectCallsForRole, requirePastor, resolveRole } from "./core/rbac.mjs";
 import { BethanyStore, resolveDefaultDbPath } from "./core/store.mjs";
-import { analyzeCallMessage, cleanEnvSecret, transcribeAudioBuffer } from "./core/triage.mjs";
+import { analyzeCallMessage, cleanEnvSecret, isAiAuthHealthy, transcribeAudioBuffer } from "./core/triage.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
@@ -69,9 +69,67 @@ function setCommonHeaders(res, contentType) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("Referrer-Policy", "no-referrer");
-  res.setHeader("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-bethany-role");
+  if (process.env.CORS_ORIGIN) {
+    res.setHeader("Access-Control-Allow-Origin", process.env.CORS_ORIGIN);
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-bethany-role");
+  }
+}
+
+function getClientIp(req) {
+  const fwd = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return fwd || req.socket?.remoteAddress || "local";
+}
+
+function createRateLimiter(windowMs = 60_000) {
+  const buckets = new Map();
+  return function enforceRateLimit(req, bucketName, maxPerWindow) {
+    if (!maxPerWindow || maxPerWindow <= 0) return;
+    const now = Date.now();
+    if (buckets.size > 2000) {
+      for (const [k, v] of buckets) {
+        if (now >= v.resetAt) buckets.delete(k);
+      }
+    }
+    const key = `${bucketName}:${getClientIp(req)}`;
+    let entry = buckets.get(key);
+    if (!entry || now >= entry.resetAt) {
+      entry = { count: 0, resetAt: now + windowMs };
+      buckets.set(key, entry);
+    }
+    entry.count += 1;
+    if (entry.count > maxPerWindow) {
+      throw Object.assign(new Error("Too many requests. Please wait a minute and try again."), {
+        status: 429,
+        retryAfterSec: Math.max(1, Math.ceil((entry.resetAt - now) / 1000)),
+      });
+    }
+  };
+}
+
+async function tryFetchTwilioRecordingBuffer(recordingUrl) {
+  const raw = String(recordingUrl || "").trim();
+  if (!/^https?:\/\//i.test(raw)) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const headers = {};
+    const sid = cleanEnvSecret(process.env.TWILIO_ACCOUNT_SID);
+    const token = cleanEnvSecret(process.env.TWILIO_AUTH_TOKEN);
+    if (sid && token) {
+      headers.Authorization = `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`;
+    }
+    const wavUrl = /\.wav($|\?)/i.test(raw) ? raw : `${raw}.wav`;
+    const res = await fetch(wavUrl, { headers, signal: controller.signal });
+    if (!res.ok) return null;
+    const ab = await res.arrayBuffer();
+    if (!ab.byteLength || ab.byteLength > 4 * 1024 * 1024) return null;
+    return Buffer.from(ab);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function sendJson(res, status, payload) {
@@ -192,8 +250,11 @@ export async function createBethanyApp({
   dbPath = resolveDefaultDbPath(ROOT_DIR),
   audioFilePath = DEFAULT_AUDIO_PATH,
   upstash = null,
+  rateLimitPerMin = 45,
+  transcribeLimitPerMin = 15,
 } = {}) {
   const store = new BethanyStore(dbPath, { upstash });
+  const enforceRateLimit = createRateLimiter(60_000);
   await store.seedIfEmpty();
 
   const handler = async (req, res) => {
@@ -218,6 +279,7 @@ export async function createBethanyApp({
           callsCount: all.length,
           aiMode: getAiProviderLabel(),
           aiKeyFormatValid: isAiKeyFormatValid(),
+          aiAuthHealthy: isAiAuthHealthy(),
           persistenceMode: store.getPersistenceMode(),
           twilioSignatureEnforced: Boolean(process.env.TWILIO_AUTH_TOKEN),
           audioReady: fs.existsSync(audioFilePath),
@@ -245,6 +307,7 @@ export async function createBethanyApp({
 
       // Live audio transcription via free Groq Whisper or free Google Gemini (<=4MB audio)
       if (req.method === "POST" && pathname === "/api/transcribe") {
+        enforceRateLimit(req, "transcribe", transcribeLimitPerMin);
         const body = await readBody(req, MAX_AUDIO_JSON_BYTES);
         const rawB64 = String(body.audioBase64 || "").replace(/^data:[^;]+;base64,/, "").trim();
         if (!rawB64) {
@@ -259,6 +322,7 @@ export async function createBethanyApp({
 
       // Real Twilio Voice webhook (application/x-www-form-urlencoded or JSON)
       if (req.method === "POST" && pathname === "/api/twiml") {
+        enforceRateLimit(req, "twiml", rateLimitPerMin);
         const body = await readBody(req);
         const fullUrl = `${baseUrl}${req.url}`;
         const validSig = verifyTwilioSignature({
@@ -271,20 +335,57 @@ export async function createBethanyApp({
           return sendJson(res, 403, { error: "Invalid Twilio webhook signature." });
         }
 
-        await store.syncFromRemote();
         const step = url.searchParams.get("step");
 
-        if (step === "recorded" || body.TranscriptionText) {
-          const transcript = String(body.TranscriptionText || body.transcript || "").trim();
+        if (step === "recorded" || step === "transcribed" || body.TranscriptionText || body.RecordingUrl) {
+          let transcript = String(body.TranscriptionText || body.transcript || "").trim();
           const callerPhone = String(body.From || "(555) 014-0000").trim();
-          if (transcript) {
-            const analyzed = await analyzeCallMessage({
-              callerName: String(body.CallerName || "Phone Caller"),
-              callerPhone,
-              transcript,
-            });
-            store.createCall(analyzed);
-            await store.syncToRemote();
+          const callerName = String(body.CallerName || "Phone Caller").trim();
+          const externalSid = String(body.RecordingSid || body.CallSid || "").trim() || null;
+
+          if (!transcript && body.RecordingUrl) {
+            const recBuf = await tryFetchTwilioRecordingBuffer(body.RecordingUrl);
+            if (recBuf) {
+              try {
+                const stt = await transcribeAudioBuffer({
+                  buffer: recBuf,
+                  mimeType: "audio/wav",
+                  filename: "twilio-recording.wav",
+                });
+                transcript = stt.transcript;
+              } catch {
+                // Fall back to safe pending callback record below so no voicemail is ever dropped.
+              }
+            }
+          }
+
+          const analyzed = transcript
+            ? await analyzeCallMessage({ callerName, callerPhone, transcript })
+            : {
+                callerId: `caller-${callerPhone.replace(/[^0-9]+/g, "") || "landline"}`,
+                callerName,
+                callerLabel: "Phone Caller",
+                callerPhone,
+                rawTranscript: "Voice recording received on landline. Audio awaiting pastor playback or transcription callback.",
+                category: "prayer",
+                status: "pending_review",
+                pastoralSummary: "Landline voice recording received; follow up by phone.",
+                volunteerSummary: null,
+                requestedTime: "Callback requested",
+                redactedItems: [],
+                crisisFlags: [],
+                crisisReasons: [],
+                emergencyResources: [],
+                aiCounselingBlocked: true,
+                extractionMode: "twilio_recording_pending",
+              };
+
+          await store.syncFromRemote();
+          store.createCall(analyzed, { externalSid });
+          await store.syncToRemote();
+
+          if (step === "transcribed") {
+            return sendJson(res, 200, { ok: true });
           }
           const ack = [
             '<?xml version="1.0" encoding="UTF-8"?>',
@@ -297,15 +398,17 @@ export async function createBethanyApp({
           return sendXml(res, 200, ack);
         }
 
-        const digit = body.Digits ?? body.digit ?? "";
-        const ivrState = resolveIvrStep(digit);
+        const digitOrSpeech = body.Digits ?? body.digit ?? body.SpeechResult ?? "";
+        const ivrState = resolveIvrStep(digitOrSpeech);
         if (ivrState.urgentTransfer) {
+          const urgentSid = body.CallSid ? `urgent-${String(body.CallSid).trim()}` : null;
           const urgent = await analyzeCallMessage({
             callerName: String(body.CallerName || "Urgent Landline Caller"),
             callerPhone: String(body.From || "(555) 014-0000"),
             transcript: "Caller pressed 0 requesting urgent pastoral care — spiritual crisis / immediate callback requested.",
           });
-          store.createCall(urgent);
+          await store.syncFromRemote();
+          store.createCall(urgent, { externalSid: urgentSid });
           await store.syncToRemote();
         }
         return sendXml(res, 200, renderTwiml(ivrState, baseUrl));
@@ -335,6 +438,7 @@ export async function createBethanyApp({
 
       // Create / intake a new voice message (preset or live transcript)
       if (req.method === "POST" && pathname === "/api/calls") {
+        enforceRateLimit(req, "writes", rateLimitPerMin);
         const role = resolveRole(req, url);
         const body = await readBody(req);
         const preset = body.presetKey ? CALLER_PRESETS[body.presetKey] : null;
@@ -351,8 +455,8 @@ export async function createBethanyApp({
           throw Object.assign(new Error("Transcript must be between 3 and 2000 characters."), { status: 400 });
         }
 
-        await store.syncFromRemote();
         const analyzed = await analyzeCallMessage({ callerId, callerName, callerPhone, transcript });
+        await store.syncFromRemote();
         const created = store.createCall(analyzed);
         await store.syncToRemote();
         return sendJson(res, 201, {
@@ -427,6 +531,7 @@ export async function createBethanyApp({
 
       // Reset synthetic demo fixtures (Pastor-only)
       if (req.method === "POST" && pathname === "/api/demo/reset") {
+        enforceRateLimit(req, "reset", Math.min(10, rateLimitPerMin));
         const role = resolveRole(req, url);
         requirePastor(role);
         await store.resetDemo();
@@ -438,6 +543,12 @@ export async function createBethanyApp({
       return sendJson(res, 404, { error: `Route not found: ${req.method} ${pathname}` });
     } catch (err) {
       const status = err.status || 500;
+      if (err.retryAfterSec) {
+        res.setHeader("Retry-After", String(err.retryAfterSec));
+      }
+      if (status === 500 || status >= 502) {
+        console.error(`[bethany] ${req.method} ${req.url} -> ${status}: ${err?.message || "unhandled error"}`);
+      }
       const message = status === 500 ? "Internal server error." : err.message;
       return sendJson(res, status, { error: message });
     }

@@ -93,7 +93,7 @@
               <div class="audio-card-sub">
                 <span id="hero-sermon-speaker">Pastor David Chen</span> · <span class="mono" id="hero-audio-time">0:00 / 0:37</span>
               </div>
-              <div class="audio-progress" aria-hidden="true">
+              <div class="audio-progress" id="hero-audio-bar" role="slider" tabindex="0" aria-label="Seek Sunday message" aria-valuemin="0" aria-valuemax="37" aria-valuenow="0">
                 <div class="audio-progress-fill" id="hero-audio-fill"></div>
               </div>
             </div>
@@ -198,15 +198,15 @@
               <span class="safeguard-num mono">02</span>
               <div>
                 <h3>Deterministic crisis circuit breaker</h3>
-                <p>Self-harm, abuse, medical falls, and acute distress are detected by deterministic rules before any LLM prompt runs. Urgent calls and private prayers cannot be approved into the volunteer errand pool (HTTP 409).</p>
+                <p>Self-harm, abuse, medical falls, and acute distress are detected by deterministic rules before any AI prompt runs. Urgent calls and private prayers are blocked on the server from entering the volunteer errand pool.</p>
               </div>
             </article>
 
             <article class="safeguard-row">
               <span class="safeguard-num mono">03</span>
               <div>
-                <h3>Server-side RBAC and Rock#7183 immunity</h3>
-                <p>Volunteer payloads physically omit raw transcripts, phone numbers, doctors, street addresses, and medications on the server. Unknown caller lookups return an empty list rather than dumping congregation care records.</p>
+                <h3>Strict server-side medical privacy</h3>
+                <p>Volunteer screens receive only approved practical errands. Raw transcripts, phone numbers, doctors, street addresses, and medications are stripped on the server before data leaves the church desk.</p>
               </div>
             </article>
 

@@ -32,8 +32,17 @@ export function verifyTwilioSignature({ authToken, fullUrl, params, headerSignat
   return crypto.timingSafeEqual(expected, provided);
 }
 
+function normalizeSpokenOrKeypadInput(raw = "") {
+  const cleaned = String(raw || "").trim().toLowerCase().replace(/[.!?]+$/g, "");
+  if (!cleaned || cleaned === "menu" || cleaned === "*") return "";
+  if (cleaned === "1" || /\b(one|sermon|message|pastor|sunday)\b/.test(cleaned)) return "1";
+  if (cleaned === "2" || /\b(two|prayer|need|errand|help|ride|visit|deacon)\b/.test(cleaned)) return "2";
+  if (cleaned === "0" || /\b(zero|operator|urgent|emergency|crisis)\b/.test(cleaned)) return "0";
+  return String(raw || "").trim();
+}
+
 export function resolveIvrStep(digitRaw = "") {
-  const digit = String(digitRaw || "").trim();
+  const digit = normalizeSpokenOrKeypadInput(digitRaw);
 
   if (digit === "" || digit === "menu") {
     return {
@@ -99,6 +108,7 @@ export function resolveIvrStep(digitRaw = "") {
 export function renderTwiml(ivrState, baseUrl = "") {
   const cleanBase = String(baseUrl || "").replace(/\/$/, "");
   const actionUrl = `${cleanBase}/api/twiml`;
+  const gatherAttrs = `numDigits="1" input="dtmf speech" speechTimeout="auto" hints="one, two, zero, sermon, prayer, help, urgent" action="${xmlEscape(actionUrl)}" method="POST" timeout="8"`;
   const say = (text) => `<Say voice="Polly.Joanna">${xmlEscape(text)}</Say>`;
 
   if (ivrState.step === "sermon_playback") {
@@ -107,8 +117,8 @@ export function renderTwiml(ivrState, baseUrl = "") {
       '<?xml version="1.0" encoding="UTF-8"?>',
       "<Response>",
       `  <Play>${xmlEscape(audioFull)}</Play>`,
-      `  <Gather numDigits="1" action="${xmlEscape(actionUrl)}" method="POST" timeout="8">`,
-      `    ${say("Press 2 to leave a prayer or errand request, or press 1 to hear the message again.")}`,
+      `  <Gather ${gatherAttrs}>`,
+      `    ${say("Press or say 2 to leave a prayer or errand request, or 1 to hear the message again.")}`,
       "  </Gather>",
       `  ${say("God bless you. Goodbye.")}`,
       "</Response>",
@@ -117,11 +127,12 @@ export function renderTwiml(ivrState, baseUrl = "") {
 
   if (ivrState.step === "record_need") {
     const recordAction = `${cleanBase}/api/twiml?step=recorded`;
+    const transcribeCallback = `${cleanBase}/api/twiml?step=transcribed`;
     return [
       '<?xml version="1.0" encoding="UTF-8"?>',
       "<Response>",
       `  ${say(ivrState.spokenText)}`,
-      `  <Record action="${xmlEscape(recordAction)}" method="POST" maxLength="120" playBeep="true" transcribe="true" />`,
+      `  <Record action="${xmlEscape(recordAction)}" method="POST" maxLength="120" playBeep="true" transcribe="true" transcribeCallback="${xmlEscape(transcribeCallback)}" />`,
       `  ${say("We did not hear a recording. Please call back anytime.")}`,
       "</Response>",
     ].join("\n");
@@ -139,7 +150,7 @@ export function renderTwiml(ivrState, baseUrl = "") {
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     "<Response>",
-    `  <Gather numDigits="1" action="${xmlEscape(actionUrl)}" method="POST" timeout="8">`,
+    `  <Gather ${gatherAttrs}>`,
     `    ${say(ivrState.spokenText)}`,
     "  </Gather>",
     `  ${say("We did not receive a selection. Please call Grace Harbor Church again anytime.")}`,

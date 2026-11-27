@@ -19,6 +19,8 @@ const state = {
   isRecording: false,
   callSeconds: 0,
   callTimerId: null,
+  resetArmedUntil: 0,
+  resetTimerId: null,
 };
 
 const el = (id) => document.getElementById(id);
@@ -39,7 +41,8 @@ function escapeHtml(str) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function formatClock(sec) {
@@ -105,6 +108,14 @@ function syncAudioUi() {
   if (heroFill) heroFill.style.transform = `scaleX(${ratio})`;
   if (handsetFill) handsetFill.style.transform = `scaleX(${ratio})`;
 
+  for (const barId of ["hero-audio-bar", "handset-audio-bar"]) {
+    const bar = el(barId);
+    if (bar) {
+      bar.setAttribute("aria-valuemax", String(Math.round(dur)));
+      bar.setAttribute("aria-valuenow", String(Math.round(audio.currentTime)));
+    }
+  }
+
   if (el("hero-audio-time")) el("hero-audio-time").textContent = `${formatClock(audio.currentTime)} / ${formatClock(dur)}`;
   if (el("handset-audio-clock")) el("handset-audio-clock").textContent = formatClock(audio.currentTime);
 
@@ -139,7 +150,32 @@ if (audio) {
   });
 }
 
-// Landing page scroll header state
+function bindAudioSeekBar(barEl) {
+  if (!barEl || !audio) return;
+  barEl.addEventListener("click", (e) => {
+    const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 37;
+    const rect = barEl.getBoundingClientRect();
+    if (!rect.width) return;
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = ratio * dur;
+    syncAudioUi();
+  });
+  barEl.addEventListener("keydown", (e) => {
+    const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 37;
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      audio.currentTime = Math.min(dur, audio.currentTime + 5);
+      syncAudioUi();
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      audio.currentTime = Math.max(0, audio.currentTime - 5);
+      syncAudioUi();
+    }
+  });
+}
+
+bindAudioSeekBar(el("hero-audio-bar"));
+bindAudioSeekBar(el("handset-audio-bar"));
 const siteNav = el("site-nav");
 if (siteNav) {
   const syncNavScroll = () => {
@@ -244,10 +280,15 @@ function renderCalls() {
         : "";
 
       const hiddenCount = (c.redactedItems || []).length;
+      const canEditSummary = c.status === "pending_review" && c.category !== "prayer" && !isUrgent;
       const volunteerPreviewHtml = c.volunteerSummary
         ? `<div class="volunteer-preview-strip">
-             <span class="volunteer-preview-label">What a volunteer will see${hiddenCount ? ` · ${hiddenCount} private details hidden` : ""}</span>
-             ${escapeHtml(c.volunteerSummary)}
+             <label class="volunteer-preview-label" ${canEditSummary ? `for="summary-${escapeHtml(c.id)}"` : ""}>What a volunteer will see${hiddenCount ? ` · ${hiddenCount} private details hidden` : ""}${canEditSummary ? " (editable before approval)" : ""}</label>
+             ${
+               canEditSummary
+                 ? `<input type="text" class="summary-override-input" id="summary-${escapeHtml(c.id)}" value="${escapeHtml(c.volunteerSummary)}" maxlength="180" />`
+                 : escapeHtml(c.volunteerSummary)
+             }
            </div>`
         : !isUrgent
           ? `<div class="volunteer-preview-strip">
@@ -355,7 +396,16 @@ async function handleKeypad(digit) {
       if (audio) audio.pause();
       el("screen-audio-strip").hidden = true;
       el("screen-state").textContent = "Urgent escalation · 911 / 988";
-      await submitPresetCall("evelyn_urgent");
+      await apiFetch("/api/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          callerName: "Landline Caller (Pressed 0)",
+          transcript: "Caller pressed 0 on landline keypad requesting urgent pastoral care — spiritual crisis / immediate callback requested.",
+        }),
+      });
+      await refreshCalls();
+      showToast("Urgent keypad 0 alert pinned to Pastor care queue");
     } else {
       if (audio) audio.pause();
       el("screen-audio-strip").hidden = true;
@@ -366,8 +416,12 @@ async function handleKeypad(digit) {
   }
 }
 
-async function submitPresetCall(presetKey) {
+async function submitPresetCall(presetKey, chipEl = null) {
   const feedback = el("intake-feedback");
+  const ctaEl = chipEl?.querySelector(".scenario-cta");
+  const prevCta = ctaEl ? ctaEl.textContent : "";
+  if (chipEl) chipEl.disabled = true;
+  if (ctaEl) ctaEl.textContent = "Sending...";
   if (feedback) feedback.textContent = "Processing";
   try {
     const res = await apiFetch("/api/calls", {
@@ -388,6 +442,9 @@ async function submitPresetCall(presetKey) {
     await refreshCalls();
   } catch (err) {
     if (feedback) feedback.textContent = err.message;
+  } finally {
+    if (chipEl) chipEl.disabled = false;
+    if (ctaEl) ctaEl.textContent = prevCta;
   }
 }
 
@@ -495,15 +552,29 @@ if (isPhoneApp) {
   if (el("handset-audio-toggle")) el("handset-audio-toggle").addEventListener("click", () => toggleSermonAudio());
   if (el("mic-record-btn")) el("mic-record-btn").addEventListener("click", toggleMicRecording);
 
-  document.querySelectorAll(".role-tab").forEach((tab) => {
-    tab.addEventListener("click", async () => {
-      state.role = tab.dataset.role;
-      document.querySelectorAll(".role-tab").forEach((t) => {
-        const active = t.dataset.role === state.role;
-        t.classList.toggle("is-active", active);
-        t.setAttribute("aria-selected", String(active));
-      });
-      await refreshCalls();
+  const roleTabs = [...document.querySelectorAll(".role-tab")];
+  const activateRoleTab = async (nextRole, focusTab = false) => {
+    state.role = nextRole;
+    const panel = el("ledger-panel");
+    roleTabs.forEach((t) => {
+      const active = t.dataset.role === state.role;
+      t.classList.toggle("is-active", active);
+      t.setAttribute("aria-selected", String(active));
+      t.setAttribute("tabindex", active ? "0" : "-1");
+      if (active && panel) panel.setAttribute("aria-labelledby", t.id);
+      if (active && focusTab) t.focus();
+    });
+    await refreshCalls();
+  };
+
+  roleTabs.forEach((tab, idx) => {
+    tab.addEventListener("click", () => activateRoleTab(tab.dataset.role, false));
+    tab.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        const nextIdx = (idx + (e.key === "ArrowRight" ? 1 : roleTabs.length - 1)) % roleTabs.length;
+        activateRoleTab(roleTabs[nextIdx].dataset.role, true);
+      }
     });
   });
 
@@ -514,7 +585,7 @@ if (isPhoneApp) {
         el("caller-name").value = preset.callerName;
         el("caller-transcript").value = preset.transcript;
       }
-      submitPresetCall(chip.dataset.preset);
+      submitPresetCall(chip.dataset.preset, chip);
     });
   });
 
@@ -545,18 +616,23 @@ if (isPhoneApp) {
 
   el("call-list").addEventListener("click", async (e) => {
     const btn = e.target.closest("button[data-action]");
-    if (!btn) return;
+    if (!btn || btn.disabled) return;
     const { action, id } = btn.dataset;
+    const prevText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = action === "approve" ? "Approving..." : "Saving...";
     try {
       if (action === "approve") {
         const select = el(`deacon-${id}`);
+        const summaryInput = el(`summary-${id}`);
         const assignedDeacon = select ? select.value : "Deacon Thomas Reid";
+        const volunteerSummary = summaryInput ? summaryInput.value.trim() : null;
         await apiFetch(`/api/calls/${encodeURIComponent(id)}/approve`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assignedDeacon }),
+          body: JSON.stringify({ assignedDeacon, volunteerSummary }),
         });
-        showToast(`Approved and dispatched to ${assignedDeacon}. Switch to Volunteer driver to verify PII masking`);
+        showToast(`Approved and dispatched to ${assignedDeacon}. Switch to Volunteer view to verify PII masking`);
       } else if (action === "resolve") {
         await apiFetch(`/api/calls/${encodeURIComponent(id)}/resolve`, {
           method: "POST",
@@ -567,6 +643,8 @@ if (isPhoneApp) {
       }
       await refreshCalls();
     } catch (err) {
+      btn.disabled = false;
+      btn.textContent = prevText;
       showToast(err.message);
     }
   });
@@ -585,13 +663,34 @@ if (isPhoneApp) {
   el("btn-toggle-json-vol").addEventListener("click", toggleJson);
   el("btn-close-json").addEventListener("click", () => { el("json-drawer").hidden = true; });
 
-  el("btn-reset-demo").addEventListener("click", async () => {
+  const resetBtn = el("btn-reset-demo");
+  const disarmReset = () => {
+    state.resetArmedUntil = 0;
+    resetBtn.textContent = "Reset demo";
+    resetBtn.classList.remove("is-confirming");
+  };
+
+  resetBtn.addEventListener("click", async () => {
+    if (Date.now() > state.resetArmedUntil) {
+      state.resetArmedUntil = Date.now() + 3500;
+      resetBtn.textContent = "Confirm reset?";
+      resetBtn.classList.add("is-confirming");
+      clearTimeout(state.resetTimerId);
+      state.resetTimerId = setTimeout(disarmReset, 3500);
+      return;
+    }
+    clearTimeout(state.resetTimerId);
+    resetBtn.disabled = true;
+    resetBtn.textContent = "Resetting...";
     try {
       await apiFetch("/api/demo/reset", { method: "POST" });
       await refreshCalls();
       showToast("Demo queue reset to initial synthetic Grace Harbor records");
     } catch (err) {
       showToast(err.message);
+    } finally {
+      resetBtn.disabled = false;
+      disarmReset();
     }
   });
 }
@@ -605,12 +704,15 @@ async function boot() {
     if (el("hero-sermon-speaker")) el("hero-sermon-speaker").textContent = meta.sermon.speaker;
 
     if (el("console-status-line")) {
+      const aiHealthy = health.aiKeyFormatValid !== false && health.aiAuthHealthy !== false;
       const aiLabel =
-        health.aiMode === "groq_free_tier"
-          ? "Groq Whisper + LLM live"
-          : health.aiMode === "gemini_free_tier"
-            ? "Gemini live"
-            : "Deterministic local engine";
+        !aiHealthy
+          ? "Deterministic local fallback"
+          : health.aiMode === "groq_free_tier"
+            ? "Groq Whisper + LLM live"
+            : health.aiMode === "gemini_free_tier"
+              ? "Gemini live"
+              : "Deterministic local engine";
       el("console-status-line").textContent = `${meta.church.name} · ${aiLabel} · Synthetic demo`;
     }
     if (isPhoneApp) {
