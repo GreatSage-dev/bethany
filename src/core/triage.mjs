@@ -184,14 +184,22 @@ export function cleanEnvSecret(raw) {
   return s.replace(/[\r\n]+/g, "").trim();
 }
 
-async function fetchJsonWithTimeout(url, options, timeoutMs = 5500) {
+async function fetchJsonWithTimeout(url, options, timeoutMs = 5500, statusOut = null) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    if (!res.ok) return null;
+    const mergedHeaders = {
+      "User-Agent": "groq-sdk-js/0.9.0 bethany/0.1.0",
+      ...(options?.headers || {}),
+    };
+    const res = await fetch(url, { ...options, headers: mergedHeaders, signal: controller.signal });
+    if (!res.ok) {
+      if (statusOut) statusOut.status = res.status;
+      return null;
+    }
     return await res.json();
-  } catch {
+  } catch (err) {
+    if (statusOut) statusOut.code = err?.name || "fetch_error";
     return null;
   } finally {
     clearTimeout(timer);
