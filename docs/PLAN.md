@@ -19,9 +19,9 @@
 - [x] Verify desktop (`1440x900`) and mobile (`390x844`) layouts in Playwright (`0` console errors, `0px` horizontal overflow).
 
 ## Phase 2: Adversarial Audit, GitHub Push, Deploy, and Video (In Progress)
-- [x] Complete second-pass staff-engineer audit (`AUDIT.md`), fix 5 findings (`S1`, `S2`, `B1`, `B2`, `B3`), and add regression tests (`20/20` passing).
+- [x] Complete second-pass staff-engineer audit (`AUDIT.md`), fix 5 findings (`S1`, `S2`, `B1`, `B2`, `B3`), and add regression tests (`22/22` passing).
 - [x] Write plain-English `README.md`, `LICENSE`, and `CONTRIBUTING.md` and push atomic commit history to `GreatSage-dev/bethany`.
-- [ ] Deploy live to Vercel (`GROQ_API_KEY` + optional Upstash Redis) and smoke-test the live URL.
+- [x] Deploy live to Vercel (`GROQ_API_KEY` + optional Upstash Redis) and smoke-test the live URL.
 - [ ] Record 90-second demo video (`-14 LUFS`, live app in first 3 seconds) and submit on the hackathon portal.
 
 ## Explicit Cut Order If Behind

@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { exportCallsToCsv } from "../src/core/exportCsv.mjs";
 import { computeTwilioSignature, renderTwiml, resolveIvrStep, verifyTwilioSignature } from "../src/core/ivr.mjs";
 import { BethanyStore, resolveDefaultDbPath } from "../src/core/store.mjs";
-import { analyzeCallMessage, detectCrisis, findSensitiveSpans, scrubTextForVolunteer } from "../src/core/triage.mjs";
+import { analyzeCallMessage, cleanEnvSecret, detectCrisis, findSensitiveSpans, scrubTextForVolunteer } from "../src/core/triage.mjs";
 import { createBethanyApp } from "../src/server.mjs";
 import { normalizeVercelRewriteUrl } from "../api/index.js";
 
@@ -507,5 +507,11 @@ describe("Live HTTP API, Server-Side RBAC, Transcribe & Twilio Webhook Integrati
       "/api/calls?status=approved"
     );
     assert.equal(normalizeVercelRewriteUrl("/api/twiml?step=recorded"), "/api/twiml?step=recorded");
+  });
+
+  it("sanitizes pasted env secrets with accidental KEY= prefixes, quotes, or newlines", () => {
+    assert.equal(cleanEnvSecret('  GROQ_API_KEY="gsk_abc123"\r\n '), "gsk_abc123");
+    assert.equal(cleanEnvSecret("'gsk_xyz'"), "gsk_xyz");
+    assert.equal(cleanEnvSecret(""), "");
   });
 });

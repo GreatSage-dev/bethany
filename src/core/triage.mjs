@@ -174,6 +174,16 @@ function normalizeAiJson(parsed, extractionMode) {
   };
 }
 
+export function cleanEnvSecret(raw) {
+  let s = String(raw || "").trim();
+  if (!s) return "";
+  s = s.replace(/^[A-Z0-9_]+\s*=\s*/, "").trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  return s.replace(/[\r\n]+/g, "").trim();
+}
+
 async function fetchJsonWithTimeout(url, options, timeoutMs = 5500) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -192,15 +202,19 @@ async function tryAiStructuredExtract(transcript) {
   // shortcut: falls back cleanly to deterministic local extractor when no free GROQ_API_KEY / GEMINI_API_KEY / OPENAI_API_KEY is configured or free quota hits 429.
   const snippet = String(transcript || "").slice(0, 1200);
 
-  if (process.env.GROQ_API_KEY) {
-    const model = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
+  const groqKey = cleanEnvSecret(process.env.GROQ_API_KEY);
+  const geminiKey = cleanEnvSecret(process.env.GEMINI_API_KEY);
+  const openaiKey = cleanEnvSecret(process.env.OPENAI_API_KEY);
+
+  if (groqKey) {
+    const model = cleanEnvSecret(process.env.GROQ_MODEL) || "openai/gpt-oss-20b";
     const data = await fetchJsonWithTimeout(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          Authorization: `Bearer ${groqKey}`,
         },
         body: JSON.stringify({
           model,
@@ -226,9 +240,9 @@ async function tryAiStructuredExtract(transcript) {
     }
   }
 
-  if (process.env.GEMINI_API_KEY) {
-    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`;
+  if (geminiKey) {
+    const model = cleanEnvSecret(process.env.GEMINI_MODEL) || "gemini-2.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(geminiKey)}`;
     const data = await fetchJsonWithTimeout(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -249,15 +263,15 @@ async function tryAiStructuredExtract(transcript) {
     }
   }
 
-  if (process.env.OPENAI_API_KEY) {
+  if (openaiKey) {
     const data = await fetchJsonWithTimeout("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        model: cleanEnvSecret(process.env.OPENAI_MODEL) || "gpt-4o-mini",
         temperature: 0,
         response_format: { type: "json_object" },
         messages: [
@@ -288,26 +302,29 @@ export async function transcribeAudioBuffer({ buffer, mimeType = "audio/webm", f
     throw Object.assign(new Error("Audio file exceeds 4MB limit."), { status: 413 });
   }
 
-  const hasConfiguredKey = Boolean(process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY);
+  const groqKey = cleanEnvSecret(process.env.GROQ_API_KEY);
+  const geminiKey = cleanEnvSecret(process.env.GEMINI_API_KEY);
+  const openaiKey = cleanEnvSecret(process.env.OPENAI_API_KEY);
+  const hasConfiguredKey = Boolean(groqKey || geminiKey || openaiKey);
 
   // Free Tier #1: Groq Whisper (whisper-large-v3-turbo) — zero credit card required.
-  if (process.env.GROQ_API_KEY) {
+  if (groqKey) {
     const form = new FormData();
     form.append("file", new Blob([buffer], { type: mimeType }), filename);
-    form.append("model", process.env.GROQ_WHISPER_MODEL || "whisper-large-v3-turbo");
+    form.append("model", cleanEnvSecret(process.env.GROQ_WHISPER_MODEL) || "whisper-large-v3-turbo");
     form.append("response_format", "json");
     const data = await fetchJsonWithTimeout(
       "https://api.groq.com/openai/v1/audio/transcriptions",
-      { method: "POST", headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, body: form },
+      { method: "POST", headers: { Authorization: `Bearer ${groqKey}` }, body: form },
       25000
     );
     if (data?.text) return { transcript: String(data.text).trim(), provider: "groq_whisper" };
   }
 
   // Free Tier #2: Google Gemini native audio understanding — zero credit card required.
-  if (process.env.GEMINI_API_KEY) {
-    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`;
+  if (geminiKey) {
+    const model = cleanEnvSecret(process.env.GEMINI_MODEL) || "gemini-2.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(geminiKey)}`;
     const data = await fetchJsonWithTimeout(
       url,
       {
@@ -333,13 +350,13 @@ export async function transcribeAudioBuffer({ buffer, mimeType = "audio/webm", f
   }
 
   // Optional OpenAI Whisper
-  if (process.env.OPENAI_API_KEY) {
+  if (openaiKey) {
     const form = new FormData();
     form.append("file", new Blob([buffer], { type: mimeType }), filename);
     form.append("model", "whisper-1");
     const data = await fetchJsonWithTimeout(
-      "https://api.openai.com/openai/v1/audio/transcriptions",
-      { method: "POST", headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` }, body: form },
+      "https://api.openai.com/v1/audio/transcriptions",
+      { method: "POST", headers: { Authorization: `Bearer ${openaiKey}` }, body: form },
       25000
     );
     if (data?.text) return { transcript: String(data.text).trim(), provider: "openai_whisper" };

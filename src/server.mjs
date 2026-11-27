@@ -9,7 +9,7 @@ import { CALLER_PRESETS, CHURCH_PROFILE, DEMO_DEACONS } from "./core/fixtures.mj
 import { renderTwiml, resolveIvrStep, verifyTwilioSignature, xmlEscape } from "./core/ivr.mjs";
 import { projectCallForRole, projectCallsForRole, requirePastor, resolveRole } from "./core/rbac.mjs";
 import { BethanyStore, resolveDefaultDbPath } from "./core/store.mjs";
-import { analyzeCallMessage, transcribeAudioBuffer } from "./core/triage.mjs";
+import { analyzeCallMessage, cleanEnvSecret, transcribeAudioBuffer } from "./core/triage.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
@@ -172,10 +172,20 @@ function getBaseUrl(req) {
 }
 
 function getAiProviderLabel() {
-  if (process.env.GROQ_API_KEY) return "groq_free_tier";
-  if (process.env.GEMINI_API_KEY) return "gemini_free_tier";
-  if (process.env.OPENAI_API_KEY) return "openai";
+  if (cleanEnvSecret(process.env.GROQ_API_KEY)) return "groq_free_tier";
+  if (cleanEnvSecret(process.env.GEMINI_API_KEY)) return "gemini_free_tier";
+  if (cleanEnvSecret(process.env.OPENAI_API_KEY)) return "openai";
   return "deterministic_local";
+}
+
+function isAiKeyFormatValid() {
+  const groq = cleanEnvSecret(process.env.GROQ_API_KEY);
+  if (groq) return groq.startsWith("gsk_");
+  const gemini = cleanEnvSecret(process.env.GEMINI_API_KEY);
+  if (gemini) return gemini.startsWith("AIza");
+  const openai = cleanEnvSecret(process.env.OPENAI_API_KEY);
+  if (openai) return openai.startsWith("sk-");
+  return true;
 }
 
 export async function createBethanyApp({
@@ -207,6 +217,7 @@ export async function createBethanyApp({
           church: CHURCH_PROFILE.name,
           callsCount: all.length,
           aiMode: getAiProviderLabel(),
+          aiKeyFormatValid: isAiKeyFormatValid(),
           persistenceMode: store.getPersistenceMode(),
           twilioSignatureEnforced: Boolean(process.env.TWILIO_AUTH_TOKEN),
           audioReady: fs.existsSync(audioFilePath),
@@ -427,7 +438,7 @@ export async function createBethanyApp({
       return sendJson(res, 404, { error: `Route not found: ${req.method} ${pathname}` });
     } catch (err) {
       const status = err.status || 500;
-      const message = status >= 500 ? "Internal server error." : err.message;
+      const message = status === 500 ? "Internal server error." : err.message;
       return sendJson(res, status, { error: message });
     }
   };
